@@ -1821,8 +1821,51 @@
 
   <!-- VISUAL & UNLOCKABLES -->
   <div class="visual-col">
+    <!-- SELECTOR DE VISTA MULTIMODAL -->
+    <div class="visual-tabs">
+      <button class="v-tab active" id="tabVideo" onclick="switchVisualView('video')">🎬 Cinemática / Opening</button>
+      <button class="v-tab" id="tabMap" onclick="switchVisualView('map')">🗺️ Mapa Vivo (Pixel Art)</button>
+      <button class="v-tab" id="tabArt" onclick="switchVisualView('art')">🖼️ Retrato</button>
+    </div>
+
+    <!-- REPRODUCTOR DE VIDEO CINEMÁTICO (OPENING & RECUERDOS) -->
+    <div class="cinematic-card" id="cinematicCard">
+      <div class="video-container">
+        <video id="gameVideoPlayer" playsinline loop poster="assets/images/yukiho_cover.jpg">
+          <source src="assets/videos/opening.mp4" type="video/mp4">
+        </video>
+        <div class="video-controls-overlay">
+          <button class="v-ctrl-btn" id="btnPlayPause" onclick="togglePlayPause()">▶ Reproducir</button>
+          <button class="v-ctrl-btn" id="btnMuteVideo" onclick="toggleMuteVideo()">🔊 Sonido</button>
+          <span class="video-title-pill" id="currentVideoTitle">Soundtrack · La Chica Errante</span>
+        </div>
+      </div>
+
+      <!-- BÓVEDA DE CINEMÁTICAS & VIDEOS DESBLOQUEABLES -->
+      <div class="video-vault-box">
+        <div class="vault-header">
+          <span>📼 Bóveda de Recuerdos</span>
+          <span class="vault-count">4 Cinemáticas</span>
+        </div>
+        <div class="video-chips-grid">
+          <button class="v-chip active" onclick="playVaultVideo('assets/videos/opening.mp4', 'Soundtrack · La Chica Errante', this)">
+            🎬 Opening Oficial
+          </button>
+          <button class="v-chip" onclick="playVaultVideo('assets/videos/clip_tormenta.mp4', 'Refugio en la Tormenta', this)">
+            🌧️ Tormenta y Refugio
+          </button>
+          <button class="v-chip" onclick="playVaultVideo('assets/videos/clip_cocina.mp4', 'Té Caliente en la Cocina', this)">
+            🍵 Noche en la Cocina
+          </button>
+          <button class="v-chip" onclick="playVaultVideo('assets/videos/clip_balcon.mp4', 'Balcón y Lluvia Suave', this)">
+            🌅 Balcón Tras la Lluvia
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- MAPA VIVO DEL DEPARTAMENTO (pixel art, assets/apartment/apartment-map.js) -->
-    <div class="apt-card" id="aptMap"></div>
+    <div class="apt-card" id="aptMap" style="display:none;"></div>
 
     <!-- Retrato grande oculto: el mapa vivo y la bitácora ocupan su lugar; el retrato se ve desde la miniatura del mapa. -->
     <div class="visual-card" hidden>
