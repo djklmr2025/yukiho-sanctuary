@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "functions": {
+    "api/album.js": { "includeFiles": "private-albums/**" }
+  },
+  "redirects": [
+    { "source": "/private-albums/(.*)", "destination": "/", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

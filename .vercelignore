@@ -1,0 +1,6 @@
+.backup-*
+tests
+index.html.bak
+scripts
+firestore.ledger.rules
+node_modules

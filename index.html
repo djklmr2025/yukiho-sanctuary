@@ -1,0 +1,4340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Bóveda de los Frágiles · Yukiho en Cancún (ARKAIOS)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400;1,600&display=swap" rel="stylesheet">
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Firebase Cloud Wallet & Arkaios World Sync -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+  :root {
+    --bg-dark: #07090e;
+    --bg-card: rgba(15, 19, 29, 0.9);
+    --border-color: rgba(217, 119, 6, 0.35);
+    --accent-amber: #f59e0b;
+    --accent-gold: #fbbf24;
+    --accent-rose: #f43f5e;
+    --accent-teal: #14b8a6;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg-dark);
+    background-image: 
+      radial-gradient(circle at 80% 15%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
+      radial-gradient(circle at 15% 85%, rgba(20, 184, 166, 0.08) 0%, transparent 45%),
+      linear-gradient(rgba(7, 9, 14, 0.96), rgba(7, 9, 14, 0.96));
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* TOP NAVBAR */
+  header {
+    background: rgba(10, 13, 20, 0.95);
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-logo {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: #fff;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    padding: 5px 10px;
+    border-radius: 6px;
+  }
+  .brand-text h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .brand-text small { display: block; font-size: 11px; color: var(--text-muted); }
+
+  .user-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--accent-amber);
+    color: #fff;
+  }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  .user-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .user-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    flex: 1;
+    max-width: 1440px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 20px;
+  }
+  @media(max-width: 1024px) { main { grid-template-columns: 1fr; } }
+
+  .story-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* METRICS & TRACKER */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+  }
+  .stat-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .stat-pill small {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+  }
+  .stat-pill strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+
+  /* DIALOGUE & NARRATION */
+  .dialog-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 22px;
+    min-height: 400px;
+    max-height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .dialog-box::-webkit-scrollbar { width: 6px; }
+  .dialog-box::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.3); border-radius: 4px; }
+
+  .msg-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  .msg-header {
+    font-size: 11px;
+    color: var(--accent-amber);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+  }
+  .narration {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #cbd5e1;
+  }
+  .quote-yukiho {
+    background: rgba(245, 158, 11, 0.08);
+    border-left: 3px solid var(--accent-amber);
+    padding: 12px 18px;
+    border-radius: 0 10px 10px 0;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 15.5px;
+    font-style: italic;
+    line-height: 1.65;
+    color: #fff;
+  }
+  .speaker-label {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--accent-amber);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .player-quote {
+    background: rgba(20, 184, 166, 0.08);
+    border-left: 3px solid var(--accent-teal);
+    padding: 8px 14px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13.5px;
+    color: #99f6e4;
+  }
+
+  /* ACTIONS PANEL */
+  .control-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .panel-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .options-grid { display: flex; flex-direction: column; gap: 8px; }
+  .opt-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    text-align: left;
+    font-size: 13.5px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .opt-btn:hover {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: var(--accent-amber);
+    color: #fff;
+    transform: translateX(4px);
+  }
+  .opt-btn span.num {
+    background: rgba(245, 158, 11, 0.25);
+    color: var(--accent-amber);
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .custom-action-bar { display: flex; gap: 8px; }
+  .custom-input {
+    flex: 1;
+    background: #090c14;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: #fff;
+    outline: none;
+  }
+  .custom-input:focus { border-color: var(--accent-amber); }
+  .btn-submit {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 18px;
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-submit:hover { opacity: 0.9; }
+
+  /* RIGHT: VISUAL & UNLOCKABLES */
+  .visual-col { display: flex; flex-direction: column; gap: 14px; }
+  .visual-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+  }
+  .image-wrapper {
+    width: 100%;
+    height: 480px;
+    background: #000;
+    position: relative;
+    overflow: hidden;
+  }
+  .main-art {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    transition: opacity 0.4s ease;
+  }
+  .art-info-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(7, 9, 14, 0.96) 0%, rgba(7, 9, 14, 0.6) 60%, transparent 100%);
+    padding: 18px;
+  }
+  .art-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .art-sub { font-size: 12px; color: var(--accent-amber); margin-top: 2px; }
+  .art-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    color: #cbd5e1;
+  }
+
+  /* DESBLOQUEABLES DE USUARIO */
+  .unlocks-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .unlock-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .unlock-item {
+    height: 64px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    background: #000;
+  }
+  .unlock-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s;
+  }
+  .unlock-item.locked img { filter: grayscale(1) blur(4px); opacity: 0.35; }
+  .unlock-item .lock-badge {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    font-size: 14px;
+  }
+  .unlock-item:hover:not(.locked) img { transform: scale(1.08); }
+
+  /* MODALES */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-box {
+    background: #111522;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 540px;
+    width: 100%;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* MEMORY CARD RETRO STYLES */
+  .modal-box.modal-large {
+    max-width: 820px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  .memcard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 12px;
+  }
+  .memcard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 12px;
+  }
+  .slot-card {
+    background: #090c15;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .slot-card:hover {
+    border-color: var(--accent-teal);
+    box-shadow: 0 4px 16px rgba(94, 234, 212, 0.1);
+  }
+  .slot-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .slot-tag {
+    background: rgba(94, 234, 212, 0.15);
+    color: var(--accent-teal);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .slot-tag.autosave {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-amber);
+  }
+  .slot-body {
+    display: flex;
+    gap: 12px;
+  }
+  .slot-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: #000;
+    flex-shrink: 0;
+  }
+  .slot-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+  }
+  .slot-info strong {
+    color: #fff;
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .slot-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .flag-chip {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    color: #cbd5e1;
+  }
+  .slot-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+  }
+  .slot-btn {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .slot-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.15);
+  }
+  .slot-btn.save {
+    background: rgba(94, 234, 212, 0.15);
+    color: var(--accent-teal);
+    border-color: rgba(94, 234, 212, 0.3);
+  }
+  .slot-btn.save:hover {
+    background: var(--accent-teal);
+    color: #000;
+  }
+  .slot-btn.load {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-amber);
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+  .slot-btn.load:hover {
+    background: var(--accent-amber);
+    color: #000;
+  }
+  .slot-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* TIMELINE RASTRO DE HISTORIA */
+  .timeline-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    padding-left: 20px;
+    border-left: 2px solid rgba(94, 234, 212, 0.35);
+    margin: 14px 0 10px 10px;
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+  .timeline-node {
+    position: relative;
+    background: #090c15;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .timeline-node::before {
+    content: '';
+    position: absolute;
+    left: -27px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    border: 2px solid #07090e;
+    box-shadow: 0 0 8px var(--accent-teal);
+  }
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .timeline-saul {
+    font-size: 13px;
+    color: #fde68a;
+    font-weight: 600;
+  }
+  .timeline-yukiho {
+    font-size: 13px;
+    color: #e2e8f0;
+    font-style: italic;
+    background: rgba(255,255,255,0.03);
+    padding: 8px;
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-teal);
+  }
+  .coherence-box {
+    background: rgba(94, 234, 212, 0.08);
+    border: 1px solid rgba(94, 234, 212, 0.25);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #e2e8f0;
+  }
+
+
+  /* ARKAIOS AI ACCESS GATEWAY (BIFROST PORTAL) */
+  .portal-gateway {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: radial-gradient(circle at 50% 32%, #1a0b36 0%, #080214 65%, #030008 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    transition: opacity 0.45s ease-out, transform 0.45s ease-out, visibility 0.45s;
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    overflow-y: auto;
+  }
+  .portal-gateway.gateway-hidden {
+    opacity: 0;
+    transform: scale(1.03);
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .gateway-card {
+    background: rgba(13, 8, 28, 0.82);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(168, 85, 247, 0.32);
+    border-radius: 28px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 45px rgba(168, 85, 247, 0.2);
+    max-width: 420px;
+    width: 100%;
+    padding: 34px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .gateway-logo-wrap {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    margin-bottom: 2px;
+  }
+  .gateway-logo-img {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    box-shadow: 0 0 28px rgba(168, 85, 247, 0.6);
+    border: 2px solid rgba(56, 189, 248, 0.45);
+    object-fit: cover;
+  }
+  .gateway-logo-ring {
+    box-sizing: border-box;
+    display: block;
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 88px;
+    height: 88px;
+    border: 2px solid #ec4899;
+    border-radius: 50%;
+    animation: gateway-preloader-spin 3s linear infinite;
+    border-color: #ec4899 transparent #38bdf8 transparent;
+  }
+  @keyframes gateway-preloader-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .gateway-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .gateway-sub {
+    margin: -8px 0 6px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #cbd5e1;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .gateway-google-btn-box {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .gateway-divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 4px 0;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+  }
+  .gateway-divider::before,
+  .gateway-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .gateway-divider span {
+    padding: 0 10px;
+  }
+  .gateway-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .gateway-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: left;
+    width: 100%;
+  }
+  .gateway-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+    text-transform: uppercase;
+  }
+  .gateway-input-box {
+    display: flex;
+    align-items: center;
+    background: #120926;
+    border: 1px solid rgba(168, 85, 247, 0.28);
+    border-radius: 12px;
+    padding: 10px 14px;
+    gap: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .gateway-input-box:focus-within {
+    border-color: #c084fc;
+    box-shadow: 0 0 16px rgba(192, 132, 252, 0.25);
+  }
+  .gateway-input-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 14px;
+    width: 100%;
+    font-family: inherit;
+  }
+  .gateway-input-box input::placeholder {
+    color: #64748b;
+  }
+  .gateway-submit-btn {
+    width: 100%;
+    height: 48px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #ec4899 0%, #a855f7 100%);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 22px rgba(236, 72, 153, 0.38);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.18s, filter 0.18s;
+    margin-top: 4px;
+  }
+  .gateway-submit-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+  .gateway-links {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .gateway-link {
+    color: #c084fc;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.18s;
+  }
+  .gateway-link:hover {
+    color: #f472b6;
+    text-decoration: underline;
+  }
+  .gateway-orbit-badge {
+    margin-top: 18px;
+    transition: transform 0.2s, filter 0.2s;
+    cursor: pointer;
+  }
+  .gateway-orbit-badge:hover {
+    transform: scale(1.03);
+    filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.4));
+  }
+
+
+  /* BAZAR AMR & VESTIDOR */
+  .bazaar-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+  }
+  .bazaar-tab-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .bazaar-tab-btn.active {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: var(--accent-amber);
+  }
+  .bazaar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .bazaar-card {
+    background: #090c15;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .bazaar-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-teal);
+  }
+  .bazaar-card.equipped {
+    border-color: var(--accent-teal);
+    box-shadow: 0 0 15px rgba(94, 234, 212, 0.2);
+  }
+  .bazaar-card-img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #000;
+  }
+  .bazaar-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+  }
+  .bazaar-card-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    flex: 1;
+  }
+  .bazaar-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .bazaar-price {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent-amber);
+  }
+  .bazaar-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .bazaar-btn.buy {
+    background: linear-gradient(90deg, #ec4899, #a855f7);
+    color: #fff;
+  }
+  .bazaar-btn.equip {
+    background: rgba(94, 234, 212, 0.15);
+    color: var(--accent-teal);
+    border: 1px solid rgba(94, 234, 212, 0.3);
+  }
+  .bazaar-btn.equipped {
+    background: var(--accent-teal);
+    color: #000;
+    cursor: default;
+  }
+  .gateway-quick-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(94, 234, 212, 0.12);
+    border: 1px solid rgba(94, 234, 212, 0.35);
+    border-radius: 12px;
+    color: #5eead4;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .gateway-quick-btn:hover {
+    background: #5eead4;
+    color: #000;
+  }
+  .gateway-notice {
+    font-size: 11px;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 10px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+
+  /* COLECCIÓN PRIVADA DEL USUARIO (DECOUPLED VAULT) */
+  .collection-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+  }
+  .collection-tab-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .collection-tab-btn.active {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #c084fc;
+  }
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .collection-card {
+    background: #090c15;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .collection-card:hover {
+    transform: translateY(-2px);
+    border-color: #c084fc;
+    box-shadow: 0 4px 18px rgba(168, 85, 247, 0.25);
+  }
+  .collection-card-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background: #000;
+  }
+  .collection-card-info {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .collection-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .collection-card-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .collection-privacy-banner {
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #e2e8f0;
+    line-height: 1.4;
+  }
+  .mod-studio-box {
+    background: #090c15;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .mod-studio-input {
+    width: 100%;
+    background: #120926;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 13px;
+    box-sizing: border-box;
+    font-family: inherit;
+    outline: none;
+  }
+  .mod-studio-input:focus {
+    border-color: #c084fc;
+    box-shadow: 0 0 14px rgba(192, 132, 252, 0.25);
+  }
+  .lightbox-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .lightbox-img {
+    max-width: 90vw;
+    max-height: 80vh;
+    border-radius: 12px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    object-fit: contain;
+  }
+
+
+  /* GACHAPON / TOMBOLA RETRO ($5 AMR = $5 MXN) */
+  .gacha-stage {
+    background: radial-gradient(circle at 50% 35%, #1e0e3a 0%, #090314 75%);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gacha-machine-wrap {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gacha-drum {
+    width: 105px;
+    height: 105px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #3b82f6 100%);
+    box-shadow: 0 0 35px rgba(168, 85, 247, 0.55), inset 0 0 15px rgba(255, 255, 255, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    user-select: none;
+  }
+  .gacha-drum.spinning {
+    animation: gacha-drum-spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes gacha-drum-spin {
+    0% { transform: rotate(0deg) scale(0.95); }
+    50% { transform: rotate(180deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(0.95); }
+  }
+  .gacha-ball-chute {
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px 0;
+  }
+  .gacha-ball {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), inset -4px -4px 8px rgba(0, 0, 0, 0.35), inset 4px 4px 8px rgba(255, 255, 255, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    animation: ball-drop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes ball-drop {
+    0% { transform: translateY(-30px) scale(0.3); opacity: 0; }
+    70% { transform: translateY(4px) scale(1.15); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .ball-white  { background: radial-gradient(circle at 35% 35%, #ffffff 0%, #cbd5e1 70%, #94a3b8 100%); }
+  .ball-green  { background: radial-gradient(circle at 35% 35%, #86efac 0%, #22c55e 70%, #15803d 100%); }
+  .ball-blue   { background: radial-gradient(circle at 35% 35%, #93c5fd 0%, #3b82f6 70%, #1d4ed8 100%); }
+  .ball-purple { background: radial-gradient(circle at 35% 35%, #d8b4fe 0%, #a855f7 70%, #6b21a8 100%); box-shadow: 0 0 18px rgba(168, 85, 247, 0.6); }
+  .ball-gold   { background: radial-gradient(circle at 35% 35%, #fef08a 0%, #eab308 60%, #a16207 100%); box-shadow: 0 0 25px rgba(234, 179, 8, 0.9); }
+
+  .gacha-result-card {
+    background: rgba(13, 8, 28, 0.92);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    width: 100%;
+    max-width: 320px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+    animation: result-pop 0.35s ease-out;
+  }
+  @keyframes result-pop {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .gacha-rates-table {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+
+  /* ARKAIOS PASSPORT & RETENTION SYSTEM */
+  .passport-card-box {
+    background: linear-gradient(135deg, rgba(20, 10, 45, 0.95) 0%, rgba(8, 3, 22, 0.95) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 18px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .passport-card-box::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .passport-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+  }
+  .passport-seal {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #38bdf8;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .passport-user-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+  .passport-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+    object-fit: cover;
+    background: #000;
+  }
+  .passport-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .passport-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #ffffff;
+  }
+  .passport-email {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .passport-id-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: monospace;
+    font-weight: 700;
+    color: #7dd3fc;
+    margin-top: 2px;
+  }
+  .passport-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .passport-stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .passport-stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .passport-stat-val {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .ecosystem-modules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .eco-module-badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    color: #cbd5e1;
+  }
+  .daily-streak-banner {
+    background: linear-gradient(90deg, rgba(234, 179, 8, 0.15), rgba(245, 158, 11, 0.05));
+    border: 1px solid rgba(234, 179, 8, 0.35);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+
+
+  /* AVISO LEGAL Y TERMINOS AMR */
+  .amr-terms-notice {
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.22);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 4px 0 10px 0;
+  }
+
+
+  /* GACHAPON MINIJUEGO VISUAL REAL */
+  .gacha-stage-interactive {
+    background: radial-gradient(circle at 50% 30%, #210d3f 0%, #0a0318 70%);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 18px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(168, 85, 247, 0.15);
+    min-height: 400px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .gacha-visual-container {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .gacha-machine-img {
+    max-width: 180px;
+    max-height: 190px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.5));
+    transition: transform 0.3s;
+  }
+  .gacha-video-anim {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+    border-radius: 14px;
+  }
+  .gacha-capsule-anim {
+    display: none;
+    max-width: 160px;
+    max-height: 160px;
+    object-fit: contain;
+    animation: capsule-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    filter: drop-shadow(0 0 25px rgba(234, 179, 8, 0.8));
+  }
+  @keyframes capsule-pop {
+    0% { transform: scale(0.2) rotate(-20deg); opacity: 0; }
+    70% { transform: scale(1.1) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .gacha-actions-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 420px;
+    justify-content: center;
+  }
+  .gacha-spin-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .gacha-spin-btn.single {
+    background: linear-gradient(90deg, #ec4899 0%, #a855f7 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);
+  }
+  .gacha-spin-btn.single:hover {
+    filter: brightness(1.15);
+    transform: translateY(-2px);
+  }
+  .gacha-spin-btn.multi {
+    background: rgba(245, 158, 11, 0.18);
+    color: var(--accent-amber);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+  }
+  .gacha-spin-btn.multi:hover {
+    background: var(--accent-amber);
+    color: #000;
+    transform: translateY(-2px);
+  }
+  .prize-reveal-card {
+    background: rgba(15, 8, 30, 0.95);
+    border: 2px solid #a855f7;
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(168, 85, 247, 0.4);
+    animation: result-pop 0.35s ease-out;
+  }
+
+</style>
+
+<style>
+/* AVISO DE ECOSISTEMA AUTOSUSTENTABLE ARKAIOS */
+.arkaios-eco-notice {
+  margin-top: 14px;
+  background: rgba(16, 24, 39, 0.7);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #94a3b8;
+  backdrop-filter: blur(8px);
+}
+.eco-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.eco-text strong {
+  color: #f1f5f9;
+}
+.eco-sub {
+  font-size: 10.5px;
+  color: #64748b;
+  margin: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 4px;
+}
+
+/* MULTIMODAL SWITCHER & VIDEO PLAYER */
+.visual-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(9, 12, 20, 0.85);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 8px;
+}
+.v-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.v-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.v-tab.active {
+  background: var(--accent-amber);
+  color: #000;
+  font-weight: 700;
+}
+
+/* CINEMATIC VIDEO CARD */
+.cinematic-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+.video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
+}
+.video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.video-controls-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.v-ctrl-btn {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+}
+.v-ctrl-btn:hover {
+  background: rgba(245, 158, 11, 0.8);
+  color: #000;
+}
+.video-title-pill {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: #fbbf24;
+  background: rgba(0,0,0,0.5);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(245,158,11,0.3);
+}
+
+/* BÓVEDA DE CINEMÁTICAS */
+.video-vault-box {
+  padding: 10px 12px;
+  background: #090c14;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vault-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+.vault-count {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.video-chips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.v-chip {
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v-chip:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+}
+.v-chip.active {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--accent-amber);
+  color: #fbbf24;
+  font-weight: 700;
+}
+</style>
+
+</head>
+<body>
+
+<!-- ARKAIOS AI ACCESS GATEWAY (FULLSCREEN ENTRY PORTAL) -->
+<div id="arkaiosGateway" class="portal-gateway">
+  <div class="gateway-card">
+    <div class="gateway-logo-wrap">
+      <img src="assets/images/arkaios_logo.jpg" alt="Arkaios Logo" class="gateway-logo-img">
+      <div class="gateway-logo-ring"></div>
+    </div>
+    
+    <h2 class="gateway-title">ARKAIOS AI ACCESS</h2>
+    <p class="gateway-sub">Inicia sesión con tu cuenta de Google o Email para acceder a La Bóveda de los Frágiles</p>
+
+    <!-- GOOGLE CONTINUAR CON GOOGLE BUTTON -->
+    <div class="gateway-google-btn-box">
+      <div id="gateway_g_id_onload"
+           data-client_id="756809656093-tfe1n5jhsmkob7jev43m3u6rg5kou8c1.apps.googleusercontent.com"
+           data-callback="handleGatewayGoogleLogin"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin" 
+           data-type="standard" 
+           data-shape="pill" 
+           data-theme="filled_blue" 
+           data-text="continue_with" 
+           data-size="large" 
+           data-logo_alignment="left"
+           data-width="320">
+      </div>
+    </div>
+
+    <!-- O UTILIZA DIVIDER -->
+    <button class="gateway-quick-btn" onclick="quickLoginArkaios()">
+      ⚡ Acceso Rápido como arkaios2026@gmail.com
+    </button>
+
+    <div class="gateway-notice">
+      ℹ️ Si Google marca <em>Error 400: origin_mismatch</em>, pulsa el botón de <strong>Acceso Rápido</strong> arriba o usa tu email abajo. (Para autorizar Google One Tap en Vercel, agrega <code>https://yukiho-sanctuary.vercel.app</code> a tu consola de Google Cloud).
+    </div>
+
+    <div class="gateway-divider">
+      <span>O UTILIZA CUALQUIER EMAIL / ALIAS</span>
+    </div>
+
+    <!-- FORMULARIO DE ACCESO -->
+    <div class="gateway-form">
+      <div class="gateway-field">
+        <label class="gateway-label">EMAIL</label>
+        <div class="gateway-input-box">
+          <span>✉️</span>
+          <input type="email" id="gatewayEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter') handleEmailPasswordLogin()">
+        </div>
+      </div>
+
+      <div class="gateway-field">
+        <label class="gateway-label">CONTRASEÑA</label>
+        <div class="gateway-input-box">
+          <span>🔒</span>
+          <input type="password" id="gatewayPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') handleEmailPasswordLogin()">
+        </div>
+      </div>
+
+      <button class="gateway-submit-btn" onclick="handleEmailPasswordLogin()">
+        <span>[→]</span> INICIAR SESIÓN
+      </button>
+
+      <div class="gateway-links">
+        <a class="gateway-link" onclick="handleGuestOrRegister()">¿Modo Invitado / Sin clave?</a>
+        <a class="gateway-link" onclick="handleGuestOrRegister()">¿No tienes cuenta? Entrar</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURED ON LAUNCH ORBIT BADGE -->
+  <a href="https://launchorbit.co" target="_blank" rel="noopener noreferrer">
+    <img src="assets/images/launch_orbit_badge.svg" alt="Featured on Launch Orbit" class="gateway-orbit-badge" width="220" height="58">
+  </a>
+</div>
+
+
+<header>
+  <div class="brand">
+    <span class="brand-logo">ARKAIOS</span>
+    <div class="brand-text">
+      <h1>La Bóveda de los Frágiles</h1>
+      <small>Novela Visual Clásica 80s · Cancún, México</small>
+    </div>
+  </div>
+
+  <div class="user-nav">
+        <button class="nav-btn" onclick="openPassportModal()" style="border-color:#38bdf8; color:#7dd3fc;">
+      💳 ARKAIOS Passport
+    </button>
+    <button class="nav-btn" onclick="openCollectionModal()" style="border-color:#c084fc; color:#e9d5ff;">
+      🖼️ Mi Colección
+    </button>
+    <button class="nav-btn" onclick="openBazaarModal()"  style="border-color:var(--accent-amber); color:#fde68a;">
+      🎰 Tómbola & Vestidor (<span id="statAmrNav">25</span> AMR)
+    </button>
+    <button class="nav-btn" onclick="openMemoryCardModal()" style="border-color:var(--accent-teal); color:#5eead4;">
+      💾 Memory Card
+    </button>
+    <button class="nav-btn" onclick="openTimelineModal()" style="border-color:var(--accent-amber); color:#fde68a;">
+      🗺️ Rastro de Historia
+    </button>
+    <button class="nav-btn" id="btnAudio" onclick="toggleRainAudio()">
+      <span id="audioIcon">🌧️</span> <span id="audioTxt">Lluvia</span>
+    </button>
+    <button class="nav-btn" onclick="openUserModal()">
+      📁 Mi Historial / .log
+    </button>
+    
+    <!-- GOOGLE LOGIN / PROFILE CONTAINER -->
+    <div id="googleBtnContainer">
+      <div id="g_id_onload"
+           data-client_id="756809656093-tfe1n5jhsmkob7jev43m3u6rg5kou8c1.apps.googleusercontent.com"
+           data-callback="handleGoogleLogin"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin" data-type="standard" data-size="medium" data-theme="dark" data-text="signin_with"></div>
+    </div>
+
+        <button class="nav-btn" style="border-color:rgba(236,72,153,0.4); color:#f472b6;" onclick="logoutToGateway()">
+      🚪 Salir al Portal
+    </button>
+    <div class="user-badge" id="userProfileBadge" style="display:none;" onclick="openUserModal()">
+      <img src="" id="userProfilePic" class="user-avatar" alt="Avatar">
+      <span class="user-name" id="userProfileName">Usuario</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- STORY & CHOICES -->
+  <div class="story-col">
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat-pill">
+        <small>Escenario</small>
+        <strong>📍 Cancún · Departamento</strong>
+      </div>
+      <div class="stat-pill">
+        <small>Vínculo con Yukiho</small>
+        <strong id="statBond" style="color:var(--accent-amber);">🛡️ Confianza (20%)</strong>
+      </div>
+      <div class="stat-pill">
+        <small>Estado</small>
+        <strong id="statStatus">☕ Saliendo del baño</strong>
+      </div>
+      <div class="stat-pill">
+        <small>Tiempo Jugado</small>
+        <strong id="statPlaytime" style="color:var(--accent-teal);">⏱️ 0m 00s</strong>
+      </div>
+      <div class="stat-pill">
+        <small>Hito de Coherencia</small>
+        <strong id="statMilestone">🌱 Llegada al Refugio</strong>
+      </div>
+      <div class="stat-pill">
+        <small>Usuario Activo</small>
+        <strong id="statUser">👤 Local / Operador</strong>
+      </div>
+    </div>
+
+    <!-- DIALOG BOX -->
+    <div class="dialog-box" id="dialogLog"></div>
+
+    <!-- CONTROLS -->
+    <div class="control-panel">
+      <div class="panel-title" id="answerPrompt">¿Qué le respondes a Yukiho?</div>
+      <div class="options-grid" id="optionsContainer"></div>
+      <div class="custom-action-bar">
+        <input type="text" class="custom-input" id="customInput" placeholder="O escribe tu propia respuesta..." onkeydown="if(event.key==='Enter') submitCustomAction()">
+        <button class="btn-submit" id="btnSend" onclick="submitCustomAction()">
+          Responder ▶
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISUAL & UNLOCKABLES -->
+  <div class="visual-col">
+    <!-- MAPA VIVO DEL DEPARTAMENTO (pixel art, assets/apartment/apartment-map.js) -->
+    <div class="apt-card" id="aptMap"></div>
+
+    <!-- Retrato grande oculto: el mapa vivo y la bitácora ocupan su lugar; el retrato se ve desde la miniatura del mapa. -->
+    <div class="visual-card" hidden>
+      <div class="image-wrapper">
+        <img class="main-art" id="mainArt" src="assets/images/yukiho_cover.jpg" alt="Yukiho">
+        <div class="art-info-overlay">
+          <div class="art-title">YUKIHO</div>
+          <div class="art-sub">Joven de 19 años · Cómic Oficial STILL GAMES MX</div>
+          <div class="art-tags">
+            <span class="tag">🌧️ 80s Classic Romance</span>
+            <span class="tag">👁️ Ojos Verdes Melancólicos</span>
+            <span class="tag">📖 Cuaderno Secreto</span>
+            <span class="tag">🇲🇽 Noche en Cancún</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADO INMERSIÓN Y PRIVACIDAD -->
+    <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:12px; font-weight:700; color:var(--accent-teal);">🌸 Santuario Seguro de Cancún</span>
+        <span style="font-size:11px; color:var(--text-muted);">Atmósfera Íntima</span>
+      </div>
+      <div style="font-size:12px; color:var(--text-muted); line-height:1.5;">
+        Yukiho percibe tu cuidado y respeto. Las fotos e ilustraciones que desbloqueas se resguardan de forma privada en tu <strong>Colección de Usuario</strong> en la nube, fuera del alcance y del conocimiento del personaje.
+      </div>
+      <button class="nav-btn" style="justify-content:center; border-color:rgba(168,85,247,0.35); color:#c084fc; margin-top:2px;" onclick="openCollectionModal()">
+        🖼️ Abrir Mi Colección Privada
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL: PERFIL, HISTORIAL Y .LOG -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <h3 style="font-family:'Playfair Display', serif; color:#fff; font-size:20px;">
+      📁 Expediente de Usuario & Bitácora (.log)
+    </h3>
+    <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+      Cada decisión que tomas con tu personaje queda registrada con marca de tiempo en tu historial personal cifrado de ARKAIOS.
+    </div>
+
+    <div style="background:#090c14; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; font-size:13px;">
+      <div><strong>Usuario actual:</strong> <span id="modalUserDisplay">Operador Local</span></div>
+      <div><strong>Decisiones registradas:</strong> <span id="modalTurnCount">0 turnos</span></div>
+      <div><strong>Vínculo alcanzado:</strong> <span id="modalBondDisplay">20%</span></div>
+      <div><strong>Almacenamiento:</strong> <span style="color:var(--accent-teal);">Google Identity / SaaS Ready</span></div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button class="nav-btn" style="justify-content:center; background:var(--accent-amber); color:#000; font-weight:700;" onclick="downloadPlayerLog()">
+        📥 Descargar Mi Bitácora (.log / .json)
+      </button>
+      <button class="nav-btn" style="justify-content:center;" onclick="copyPlayerReport()">
+        📋 Copiar Resumen de Mi Partida
+      </button>
+      <button class="nav-btn" style="justify-content:center; color:var(--accent-rose);" onclick="resetCurrentUserStory()">
+        🔄 Reiniciar Mi Partida Personal
+      </button>
+      <button class="nav-btn" style="justify-content:center; border-color:rgba(236,72,153,0.4); color:#f472b6;" onclick="logoutToGateway()">
+        🚪 Cerrar Sesión y Salir al Portal
+      </button>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="nav-btn" onclick="closeUserModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: MEMORY CARD VIRTUAL (SLOTS) -->
+<div class="modal-overlay" id="memCardModal">
+  <div class="modal-box modal-large">
+    <div class="memcard-header">
+      <div>
+        <h3 style="font-family:'Playfair Display', serif; color:#fff; font-size:20px; margin:0;">
+          💾 Memory Card ARKAIOS · Ranuras de Guardado
+        </h3>
+        <small style="color:var(--text-muted);">
+          Guarda múltiples puntos de tu historia con Yukiho, registra el tiempo jugado y mantén coherencia total.
+        </small>
+      </div>
+      <button class="nav-btn" onclick="closeMemoryCardModal()">✕</button>
+    </div>
+
+    <!-- RANURAS DE MEMORY CARD -->
+    <div class="memcard-grid" id="memCardSlotsContainer">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <!-- CONTROLES DE TARJETA FÍSICA Y SINCRONIZACIÓN -->
+    <div style="background:#090c15; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:13px; font-weight:600; color:#fff;">Sincronización y Archivo (.arkaios-sav)</span>
+        <span style="font-size:11px; color:var(--accent-teal);">Tarjeta Personal Cifrada</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <button class="nav-btn" style="flex:1; justify-content:center; background:rgba(94,234,212,0.15); color:var(--accent-teal); border-color:rgba(94,234,212,0.3);" onclick="exportMemoryCardFile()">
+          📥 Exportar Memory Card (.sav)
+        </button>
+        <button class="nav-btn" style="flex:1; justify-content:center;" onclick="document.getElementById('memCardFileInput').click()">
+          📤 Importar Memory Card (.sav)
+        </button>
+        <input type="file" id="memCardFileInput" accept=".json,.sav,.arkaios-sav" style="display:none;" onchange="importMemoryCardFile(event)">
+        <button class="nav-btn" style="flex:1; justify-content:center; background:rgba(245,158,11,0.15); color:var(--accent-amber); border-color:rgba(245,158,11,0.3);" onclick="copyCloudSaveCode()">
+          ☁️ Código de Sincronización
+        </button>
+        <button class="nav-btn" style="flex:1; justify-content:center;" onclick="loadFromSaveCodePrompt()">
+          📋 Pegar Código
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RASTRO DE HISTORIA & COHERENCIA NARRATIVA -->
+<div class="modal-overlay" id="timelineModal">
+  <div class="modal-box modal-large">
+    <div class="memcard-header">
+      <div>
+        <h3 style="font-family:'Playfair Display', serif; color:#fff; font-size:20px; margin:0;">
+          🗺️ Rastro de la Historia & Coherencia Narrativa
+        </h3>
+        <small style="color:var(--text-muted);">
+          Registro cronológico de tus decisiones y la evolución emocional de Yukiho en Cancún.
+        </small>
+      </div>
+      <button class="nav-btn" onclick="closeTimelineModal()">✕</button>
+    </div>
+
+    <!-- RESUMEN DE COHERENCIA VIGENTE -->
+    <div class="coherence-box" id="coherenceOverview">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <!-- LÍNEA DE TIEMPO INTERACTIVA -->
+    <div class="timeline-container" id="timelineList">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <small style="color:var(--text-muted);">Las decisiones tomadas moldean el modo historia de forma irreversible y coherente.</small>
+      <button class="nav-btn" onclick="closeTimelineModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- MODAL: BAZAR AMR & TÓMBOLA JAPONESA (1 AMR = 1 MXN) -->
+<div class="modal-overlay" id="bazaarModal">
+  <div class="modal-box modal-large">
+    <div class="memcard-header">
+      <div>
+        <h3 style="font-family:'Playfair Display', serif; color:#fff; font-size:20px; margin:0;">
+          🎰 Tómbola Japonesa de Cancún & Vestidor
+        </h3>
+        <small style="color:var(--text-muted);">
+          Paridad: <strong>1 AMR = $1 MXN</strong> · Gachapon de pelotitas por $5 AMR · Ruta de Pasión por $50 AMR
+        </small>
+      </div>
+      <button class="nav-btn" onclick="closeBazaarModal()">✕</button>
+    </div>
+
+    <!-- BILLETERA AMR Y CÓDIGOS -->
+    <div style="background:#090c15; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div>
+        <span style="font-size:12px; color:var(--text-muted);">Tu Billetera (1 AMR = $1 MXN):</span>
+        <strong style="font-size:16px; color:var(--accent-amber); margin-left:8px;" id="modalAmrBalance">🪙 25 AMR ($25 MXN)</strong>
+        <span id="cloudSyncIndicator" style="display:none; font-size:11px; align-items:center; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:12px; padding:2px 8px; margin-left:10px;">☁️ <span style="color:#34d399; margin-left:4px;">Nube Arkaios Sincronizada</span></span>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+        <input type="text" id="amrCodeInlineInput" placeholder="Código AMR (ej: ARKAIOS-FUNDADOR-2026)" style="background:#111827; border:1px solid rgba(245,158,11,0.35); color:#f8fafc; border-radius:6px; padding:5px 10px; font-size:11px; min-width:210px; outline:none;" onkeydown="if(event.key==='Enter') redeemAmrCodePrompt()" />
+        <button class="nav-btn" id="btnRedeemAmrCode" style="padding:5px 12px; font-size:11px; background:rgba(245,158,11,0.18); border-color:rgba(245,158,11,0.45); color:#fde68a;" onclick="redeemAmrCodePrompt()">
+          + Canjear Código AMR
+        </button>
+      </div>
+      <div id="amrCodeFeedback" style="display:none; width:100%; font-size:12px; padding:6px 10px; border-radius:6px; margin-top:4px;"></div>
+    </div>
+
+    
+    <!-- AVISO LEGAL Y TÉRMINOS DE FONDOS AMR -->
+    <div class="amr-terms-notice">
+      <div style="display:flex; align-items:center; gap:6px; font-weight:800; color:#fde68a; font-size:11px; text-transform:uppercase; letter-spacing:0.8px;">
+        <span>⚖️ Términos de Conversión de AMR a Pesos (MXN) & Protección al Usuario:</span>
+      </div>
+      <div style="font-size:11px; color:#cbd5e1; line-height:1.5; margin-top:4px;">
+        • <strong>Sin Reintegros ni Devoluciones:</strong> Todo saldo convertido o cargado en AMR se transforma en crédito digital de uso interno para el juego y el ecosistema ARKAIOS; <em>no puede regresar a MXN ni es reembolsable</em> en efectivo.<br>
+        • <strong>Confirmación Antierrores:</strong> Se solicita confirmación previa antes de cualquier carga para evitar transacciones por error o montos excesivos involuntarios.<br>
+        • <strong>Filtros y Protección a Menores:</strong> Contamos con filtros de validación de medios de pago para descartar compras accidentales o realizadas por menores de edad sin consentimiento. Si se detecta un uso indebido de tarjetas, la compra será anulada para proteger a los titulares.
+      </div>
+    </div>
+
+    <!-- PESTAÑAS: TÓMBOLA vs VESTIDOR vs RUTA DE PASIÓN -->
+    <div class="bazaar-tabs">
+      <button class="bazaar-tab-btn active" id="tabBtnGacha" onclick="switchBazaarTab('gacha')">🎰 Tómbola ($5 AMR)</button>
+      <button class="bazaar-tab-btn" id="tabBtnOutfits" onclick="switchBazaarTab('outfits')">👗 Vestidor & Atuendos</button>
+      <button class="bazaar-tab-btn" id="tabBtnRoute" onclick="switchBazaarTab('route')">🗝️ Ruta de Pasión ($50 AMR)</button>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL DEL BAZAR -->
+    <div id="bazaarTabContentArea">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+      <small style="color:var(--text-muted);">Los premios y atuendos quedan guardados en tu expediente y álbum personal.</small>
+      <button class="nav-btn" onclick="closeBazaarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: COLECCIÓN PRIVADA DEL USUARIO (TOTALMENTE AISLADA DEL JUEGO) -->
+<div class="modal-overlay" id="collectionModal">
+  <div class="modal-box modal-large">
+    <div class="memcard-header">
+      <div>
+        <h3 style="font-family:'Playfair Display', serif; color:#fff; font-size:20px; margin:0;">
+          🖼️ Bóveda & Álbum Privado del Usuario
+        </h3>
+        <small style="color:var(--text-muted);">
+          Galería confidencial de tu cuenta. Desconectada de la IA para preservar el respeto y la inmersión en la historia.
+        </small>
+      </div>
+      <button class="nav-btn" onclick="closeCollectionModal()">✕</button>
+    </div>
+
+    <!-- BANNER DE PRIVACIDAD NARRATIVA -->
+    <div class="collection-privacy-banner">
+      <span style="font-size:22px;">🔒</span>
+      <div>
+        <strong>Aislamiento Narrativo Activo:</strong>
+        El agente de IA (Yukiho) no tiene acceso ni conocimiento de esta galería ni de las fotos que guardas o generas aquí. Tu relación con ella en el juego se mantiene 100% pura y respetuosa.
+      </div>
+    </div>
+
+    <!-- PESTAÑAS DE COLECCIÓN -->
+    <div class="collection-tabs">
+      <button class="collection-tab-btn active" id="colTabScenes" onclick="switchCollectionTab('scenes')">🎨 Ilustraciones & Escenas</button>
+      <button class="collection-tab-btn" id="colTabOutfits" onclick="switchCollectionTab('outfits')">👗 Álbum de Atuendos</button>
+      <button class="collection-tab-btn" id="colTabSecrets" onclick="switchCollectionTab('secrets')">🗝️ Contenido Especial / Mods</button>
+      <button class="collection-tab-btn" id="colTabStudio" onclick="switchCollectionTab('studio')">✨ Estudio de Creación (Mods IA)</button>
+    </div>
+
+    <!-- CONTENEDOR DE LA COLECCIÓN -->
+    <div id="collectionMainArea">
+      <div class="collection-grid" id="collectionGridContainer">
+        <!-- Renderizado dinámico -->
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <small style="color:var(--text-muted);">Haz clic en cualquier imagen para verla en pantalla completa o descargarla.</small>
+      <button class="nav-btn" onclick="closeCollectionModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX EN PANTALLA COMPLETA -->
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+  <img id="lightboxImg" class="lightbox-img" src="" alt="Ilustración Completa" onclick="event.stopPropagation()">
+  <div style="display:flex; gap:10px;" onclick="event.stopPropagation()">
+    <button class="nav-btn" style="background:#5eead4; color:#000; font-weight:700;" onclick="downloadLightboxImage()">
+      📥 Descargar Ilustración
+    </button>
+    <button class="nav-btn" onclick="closeLightbox()">Cerrar</button>
+  </div>
+</div>
+
+
+<!-- MODAL: ARKAIOS PASSPORT (IDENTIDAD ÚNICA DEL ECOSISTEMA) -->
+<div class="modal-overlay" id="passportModal">
+  <div class="modal-box modal-large">
+    <div class="memcard-header">
+      <div>
+        <h3 style="font-family:'Playfair Display', serif; color:#fff; font-size:20px; margin:0;">
+          💳 ARKAIOS Passport · Identidad Digital Única
+        </h3>
+        <small style="color:var(--text-muted);">
+          Tu cuenta unificada para Novela Visual, Expo-Arkaios, Movilidad Colectiva y Educación Libre.
+        </small>
+      </div>
+      <button class="nav-btn" onclick="closePassportModal()">✕</button>
+    </div>
+
+    <!-- TARJETA CYBERNETICA PASSPORT -->
+    <div class="passport-card-box">
+      <div class="passport-header-row">
+        <div class="passport-seal">
+          <span>🌐 ARKAIOS ECOSYSTEM FEDERATION</span>
+        </div>
+        <span style="font-size:11px; color:#38bdf8; font-weight:700;">🟢 CIUDADANO VERIFICADO</span>
+      </div>
+
+      <div class="passport-user-row">
+        <img id="passportAvatar" src="" class="passport-avatar" alt="Avatar">
+        <div class="passport-user-info">
+          <div class="passport-name" id="passportName">Usuario</div>
+          <div class="passport-email" id="passportEmail">usuario@arkaios.ai</div>
+          <div>
+            <span class="passport-id-badge" id="passportIdBadge">ARK-XXXXXXXX</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="passport-stats-grid">
+        <div class="passport-stat-item">
+          <span class="passport-stat-label">Billetera AMR</span>
+          <span class="passport-stat-val" style="color:var(--accent-amber);" id="passportAmrDisplay">🪙 25 AMR</span>
+        </div>
+        <div class="passport-stat-item">
+          <span class="passport-stat-label">Asistencia Diaria</span>
+          <span class="passport-stat-val" style="color:#f59e0b;" id="passportStreakDisplay">🔥 1 día</span>
+        </div>
+        <div class="passport-stat-item">
+          <span class="passport-stat-label">Rango Ecosistema</span>
+          <span class="passport-stat-val" style="color:#5eead4;">🌟 Rango 1 · Residente</span>
+        </div>
+      </div>
+
+      
+      <!-- NOTA DE POLÍTICA AMR -->
+      <div style="background:rgba(245, 158, 11, 0.05); border:1px solid rgba(245, 158, 11, 0.18); border-radius:10px; padding:8px 12px; font-size:11px; color:#cbd5e1; line-height:1.4;">
+        ⚠️ <strong>Política de Moneda AMR:</strong> La paridad de 1 AMR = $1 MXN es para adquisición de servicios y dinámicas digitales del ecosistema. Los fondos cargados se convierten en moneda virtual sin reintegros a moneda fiat. Aplicamos filtros de seguridad para rechazar compras erróneas o de menores.
+      </div>
+
+      <!-- MÓDULOS DEL ECOSISTEMA -->
+      <div style="font-size:11px; font-weight:800; color:#94a3b8; letter-spacing:0.8px; text-transform:uppercase;">
+        MÓDULOS VINCULADOS A ESTA CUENTA:
+      </div>
+      <div class="ecosystem-modules-list">
+        <div class="eco-module-badge">
+          <span>🌸 Novela Visual: La Bóveda de los Frágiles</span>
+          <span style="color:#5eead4; font-weight:700;">✓ Conectado</span>
+        </div>
+        <div class="eco-module-badge">
+          <span>🏛️ Expo-Arkaios & Portal Central</span>
+          <span style="color:#5eead4; font-weight:700;">✓ Conectado</span>
+        </div>
+        <div class="eco-module-badge">
+          <span>🚗 Arkaios Mobility (Viajes Colectivos tipo Uber)</span>
+          <span style="color:#f59e0b; font-weight:700;">⏳ Próximamente (Saldo AMR Compartido)</span>
+        </div>
+        <div class="eco-module-badge">
+          <span>🎓 Arkaios Educación Libre & Plantillas</span>
+          <span style="color:#f59e0b; font-weight:700;">⏳ Próximamente</span>
+        </div>
+      </div>
+
+      <!-- CASILLA DE BOLETÍN / NEWSLETTER -->
+      <label style="display:flex; align-items:center; gap:10px; font-size:12px; color:#cbd5e1; cursor:pointer; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:8px;">
+        <input type="checkbox" id="chkNewsletterOptin" checked onchange="toggleNewsletterOptin(this.checked)">
+        <span>Deseo recibir comunicados oficiales y acceso anticipado a la app de viajes colectivos y educación de ARKAIOS.</span>
+      </label>
+    </div>
+
+    <!-- HERRAMIENTA DE BASE DE DATOS PARA EL CREADOR (EXPORTAR CSV) -->
+    <div style="background:#090c15; border:1px solid rgba(56, 189, 248, 0.25); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:12px; font-weight:700; color:#38bdf8;">📊 Panel del Administrador ARKAIOS:</span>
+        <span style="font-size:11px; color:var(--text-muted);">Listo para Brevo / Excel</span>
+      </div>
+      <button class="nav-btn" style="justify-content:center; background:rgba(56,189,248,0.15); color:#38bdf8; border-color:rgba(56,189,248,0.3); font-weight:700;" onclick="exportUsersDatabaseCsv()">
+        📥 Descargar Base de Datos de Usuarios Registrados (.CSV)
+      </button>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end;">
+      <button class="nav-btn" onclick="closePassportModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<audio id="ambientAudio" loop preload="none">
+  <source src="assets/audio/rain.mp3" type="audio/mpeg">
+</audio>
+
+<script src="assets/apartment/map-catalog.js"></script>
+<script src="assets/apartment/map-actions.js"></script>
+<script src="assets/apartment/city-map.js"></script>
+<script src="assets/apartment/life-routine.js"></script>
+<script src="assets/apartment/apartment-map.js"></script>
+<script src="assets/apartment/life-sim.js"></script>
+<script src="assets/wallet/amr-wallet.js"></script>
+<script src="assets/wallet/special-scenes.js"></script>
+<script src="assets/wallet/photo-albums.js"></script>
+<script>
+// ── GESTIÓN DE CUENTAS DE USUARIO ─────────────────────────────
+let currentUser = {
+  id: "local_guest",
+  name: "Operador Local",
+  email: "local@arkaios.vault",
+  picture: "https://api.dicebear.com/7.x/bottts/svg?seed=Arkaios"
+};
+
+let userState = {
+  chapter: 1,
+  bondPercent: 20,
+  history: [],
+  busy: false,
+  unlocked: ['yukiho_cover.jpg'],
+  playtimeSeconds: 0,
+  milestone: "Llegada al Refugio",
+  flags: {
+    hypothermia_halted: true,
+    dry_clothes: true,
+    hot_cinnamon_tea: false,
+    notebook_mentioned: false,
+    deep_trust: false
+  }
+};
+
+// ── LORE OFICIAL (LA BÓVEDA DE LOS FRÁGILES - CANCÚN) ──────────
+const SYSTEM_LORE = `Eres el narrador y la voz de Yukiho para la novela visual clásica dramática "La Bóveda de los Frágiles" dentro del universo ARKAIOS.
+
+AMBIENTACIÓN Y GÉNERO:
+- Romance clásico / drama maduro japonés estilo años 80s (City Pop, anime clásico adulto).
+- Lugar: Cancún, México. En el interior de un departamento cálido y acogedor durante una fuerte noche de lluvia tropical caribeña.
+- No es ciencia ficción cibernética; es una historia humana, íntima, de sanación, respeto y conexión emocional.
+
+PERSONAJES:
+1. YUKIHO:
+   - Joven mujer japonesa de 19 años de edad (adulta). Jamás tratarla como una niña.
+   - Pelo negro largo, ojos verdes grandes y nostálgicos.
+   - Lleva una playera holgada limpia y un short que le prestó el jugador tras salir del baño caliente.
+   - Superviviente de abandono y soledad; frágil, tímida, de voz suave y dulce pero con dignidad y gratitud profunda.
+   - Oculta un cuaderno con poemas y pensamientos sobre el cielo antes de la tormenta.
+2. EL JUGADOR (anfitrión del departamento; su nombre y su género los elige quien juega):
+   - Persona adulta, madura, protectora, marcada por una dolorosa separación familiar.
+   - Trata a Yukiho con respeto absoluto, sin sobrepasarse, ofreciéndole té caliente de canela, comida y refugio seguro para que deje de tener frío.
+
+
+REGLA DE PRIVACIDAD Y RESPETO HUMANO:
+- Yukiho no tiene acceso ni conocimiento de ninguna galería externa, fotos guardadas, mods o colecciones del usuario.
+- Ella vive pura y auténticamente su momento en el departamento de Cancún con ${getProtagonistName()}, basada únicamente en la calidez, la palabra y el respeto mutuo.
+
+REGLAS DE RESPUESTA:
+Responde SIEMPRE en JSON estricto:
+{
+  "narration": "Narración en tercera persona (español) de la atmósfera íntima del departamento de Cancún, la lluvia contra el cristal, el té caliente y los gestos delicados de Yukiho.",
+  "dialogue": "Palabras exactas de Yukiho (en español, con voz suave, sincera, reflexiva).",
+  "bond_change": número entre 5 y 15 (aumento de confianza y cercanía afectiva),
+  "status_text": "Breve estado de Yukiho (ej: Bebiendo té caliente, Sonrisa tímida, Mirando la lluvia)",
+  "options": [
+    "Opción 1 de respuesta reflexiva o atenta para el jugador",
+    "Opción 2 de respuesta hogareña o protectora",
+    "Opción 3 de pregunta íntima sobre su pasado o su cuaderno"
+  ],
+  "ubicacion": {"yukiho": "sala", "jugador": "sala"},
+  "mapa": [lista de acciones para dibujar en el mapa los lugares y muebles nuevos de esta escena; [] si no hay nada nuevo]
+}`;
+
+const SCENE_1 = {
+  narration: "Afuera, la lluvia torrencial de Cancún golpea los cristales del balcón en un compás rítmico e incesante. El departamento huele a té caliente de canela y calma. Tras haberla rescatado empapada de las escaleras exteriores y prestarle ropa limpia y seca (una playera holgada de algodón y una toalla suave), Yukiho sale despacio del baño. El vapor aún acaricia su cabello negro y sus ojos verdes te miran con una mezcla de desconcierto y una profunda necesidad de paz.",
+  dialogue: "«Ya no llueve aquí adentro... ¿Tú... eres quien me trajo hasta aquí? Llevaba tanto tiempo con frío que pensé que nunca dejaría de temblar. ¿De verdad puedo quedarme aquí esta noche?»",
+  bond_change: 0,
+  status_text: "Abrigada con tu playera",
+  ubicacion: { yukiho: "sala", jugador: "sala" },
+  options: [
+    "Servirle una taza de té de canela: 'Toma esto caliente, Yukiho. Estás a salvo en mi casa. Puedes quedarte todo el tiempo que necesites.'",
+    "Tranquilizarla con voz calmada: 'Llevabas mucho tiempo bajo la tormenta. Descansa en el sofá, nadie va a molestarte ni a hacerte daño aquí.'",
+    "Preguntarle con respeto: '¿Te sientes mejor después del baño caliente? Vi que guardas con mucho cuidado un pequeño cuaderno entre tus cosas.'"
+  ]
+};
+
+// ── TIEMPO Y COHERENCIA ───────────────────────────────────────
+let timerInterval = null;
+
+function startPlaytimeTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (userState) {
+      userState.playtimeSeconds = (userState.playtimeSeconds || 0) + 1;
+      const el = document.getElementById('statPlaytime');
+      if (el) el.textContent = '⏱️ ' + formatPlaytime(userState.playtimeSeconds);
+    }
+  }, 1000);
+}
+
+function formatPlaytime(totalSeconds) {
+  if (!totalSeconds || isNaN(totalSeconds)) return "0m 00s";
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+  }
+  return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+}
+
+// ── INICIALIZACIÓN ────────────────────────────────────────────
+
+// ── ARKAIOS WORLD CLOUD WALLET & SYNC (FIREBASE FIRESTORE) ────
+const firebaseConfig = {
+  projectId: "arkaios-world",
+  appId: "1:502663599735:web:d702f5242ff9672e9c9872",
+  apiKey: "AIzaSyD-ceCiJPVnLlepVBcMBhLABJEC771uypM",
+  authDomain: "arkaios-world.firebaseapp.com",
+  firestoreDatabaseId: "ai-studio-arkaioscentralbu-6a109dde-5c44-4c0a-8ce7-4afaa1c95d6c",
+  storageBucket: "arkaios-world.firebasestorage.app",
+  messagingSenderId: "502663599735"
+};
+
+let arkaiosFirebaseApp = null;
+let arkaiosAuth = null;
+let arkaiosDb = null;
+let isCloudSynced = false;
+
+function initArkaiosCloud() {
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) {
+        arkaiosFirebaseApp = firebase.initializeApp(firebaseConfig);
+      } else {
+        arkaiosFirebaseApp = firebase.app();
+      }
+      arkaiosAuth = firebase.auth();
+      try {
+        arkaiosDb = firebase.app().firestore(firebaseConfig.firestoreDatabaseId);
+      } catch(e) {
+        arkaiosDb = firebase.firestore();
+      }
+      try {
+        arkaiosDb.settings({ experimentalForceLongPolling: true });
+      } catch(e) {}
+      console.log("☁️ ARKAIOS World Cloud inicializado correctamente.");
+    }
+  } catch(err) {
+    console.warn("Aviso al inicializar ARKAIOS Cloud:", err);
+  }
+}
+
+function getCloudDocId(user) {
+  if (!user) return "usr_anonymous";
+  const emailClean = (user.email || user.id || "guest").toLowerCase().trim();
+  // Document ID determinístico: mismo correo = misma cuenta en cualquier navegador
+  return "usr_" + btoa(unescape(encodeURIComponent(emailClean))).replace(/[^a-zA-Z0-9]/g, '').slice(0, 24);
+}
+
+// Sincronizar billetera e inventario desde Firestore
+async function syncUserWithArkaiosCloud(user, googleJwt) {
+  initArkaiosCloud();
+  if (!arkaiosDb) return;
+  try {
+    let fbUser = arkaiosAuth ? arkaiosAuth.currentUser : null;
+    if (googleJwt && (!fbUser || fbUser.email !== user.email)) {
+      try {
+        const credential = firebase.auth.GoogleAuthProvider.credential(googleJwt);
+        const res = await arkaiosAuth.signInWithCredential(credential);
+        fbUser = res.user;
+      } catch(errAuth) {
+        console.warn("Firebase Auth credential fallback:", errAuth.message);
+      }
+    }
+
+    const docId = getCloudDocId(user);
+    const userDocRef = arkaiosDb.collection('users').doc(docId);
+    const snap = await userDocRef.get();
+
+    if (snap.exists) {
+      const data = snap.data();
+      // 1. El saldo AMR ya no vive aquí: lo da /api/wallet (assets/wallet/amr-wallet.js).
+
+      // 2. Inventario, vestidos y ruta
+      if (data.yukiho_state) {
+        const cs = data.yukiho_state;
+        if (Array.isArray(cs.inventory) && cs.inventory.length > 0) {
+          userState.inventory = Array.from(new Set([...(userState.inventory || []), ...cs.inventory]));
+        }
+        if (Array.isArray(cs.unlockedOutfits) && cs.unlockedOutfits.length > 0) {
+          userState.unlockedOutfits = Array.from(new Set([...(userState.unlockedOutfits || []), ...cs.unlockedOutfits]));
+        }
+        if (Array.isArray(cs.unlockedRoutes) && cs.unlockedRoutes.length > 0) {
+          userState.unlockedRoutes = Array.from(new Set([...(userState.unlockedRoutes || []), ...cs.unlockedRoutes]));
+        }
+        if (cs.equippedOutfit) {
+          userState.equippedOutfit = cs.equippedOutfit;
+        }
+        if (cs.bondPercent) {
+          userState.bondPercent = Math.max(userState.bondPercent || 20, cs.bondPercent);
+        }
+      }
+      isCloudSynced = true;
+      console.log(`☁️ Sincronizado en la nube: ${user.email}`);
+    } else {
+      // Registro inicial en la nube para el usuario
+      await userDocRef.set({
+        email: user.email || "local@arkaios.vault",
+        displayName: user.name || "Usuario",
+        arkaiosId: getArkaiosPassportId(user.id),
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        yukiho_state: {
+          inventory: userState.inventory || [],
+          unlockedOutfits: userState.unlockedOutfits || ["casual_oversized"],
+          unlockedRoutes: userState.unlockedRoutes || [],
+          equippedOutfit: userState.equippedOutfit || "casual_oversized",
+          bondPercent: userState.bondPercent || 20
+        }
+      }, { merge: true });
+      isCloudSynced = true;
+    }
+
+    saveUserStory(false); // Guardar en local sin bucle
+    updateBazaarUI();
+    updatePassportUI();
+    updateStatus();
+    updateCloudStatusBadge(true);
+  } catch(errSync) {
+    console.warn("Aviso: Sincronización cloud en modo local resiliente:", errSync);
+    updateCloudStatusBadge(false);
+  }
+}
+
+// Guardar cambios en Firestore
+async function pushStateToArkaiosCloud() {
+  initArkaiosCloud();
+  if (!arkaiosDb || !currentUser || currentUser.id === "local_guest") return;
+  try {
+    const docId = getCloudDocId(currentUser);
+    const userDocRef = arkaiosDb.collection('users').doc(docId);
+
+    await userDocRef.set({
+      email: currentUser.email,
+      displayName: currentUser.name,
+      arkaiosId: getArkaiosPassportId(currentUser.id),
+      lastActive: new Date().toISOString(),
+      yukiho_state: {
+        inventory: userState.inventory || [],
+        unlockedOutfits: userState.unlockedOutfits || ["casual_oversized"],
+        unlockedRoutes: userState.unlockedRoutes || [],
+        equippedOutfit: userState.equippedOutfit || "casual_oversized",
+        bondPercent: userState.bondPercent || 20,
+        milestone: userState.milestone || "Llegada al Refugio"
+      }
+    }, { merge: true });
+
+    updateCloudStatusBadge(true);
+  } catch(errPush) {
+    console.warn("Aviso al guardar en la nube:", errPush);
+  }
+}
+
+function updateCloudStatusBadge(online) {
+  const badge = document.getElementById('cloudSyncIndicator');
+  if (badge) {
+    if (online) {
+      badge.style.display = 'inline-flex';
+      badge.innerHTML = '☁️ <span style="color:#34d399; margin-left:4px;">Nube Arkaios Sincronizada</span>';
+    } else {
+      badge.style.display = 'inline-flex';
+      badge.innerHTML = '💾 <span style="color:#94a3b8; margin-left:4px;">Caché Local</span>';
+    }
+  }
+}
+
+// ── GATEWAY DE ACCESO BIFROST (ARKAIOS AI ACCESS) ────────────
+function enterSanctuaryFromGateway() {
+  const gateway = document.getElementById('arkaiosGateway');
+  if (gateway) {
+    gateway.classList.add('gateway-hidden');
+    gateway.style.opacity = '0';
+    gateway.style.pointerEvents = 'none';
+    gateway.style.visibility = 'hidden';
+    setTimeout(() => {
+      gateway.style.display = 'none';
+    }, 350);
+  }
+}
+
+function showGateway() {
+  const gateway = document.getElementById('arkaiosGateway');
+  if (gateway) {
+    gateway.style.display = 'flex';
+    gateway.style.opacity = '1';
+    gateway.style.pointerEvents = 'auto';
+    gateway.style.visibility = 'visible';
+    gateway.classList.remove('gateway-hidden');
+  }
+}
+
+function handleGatewayGoogleLogin(response) {
+  handleGoogleLogin(response);
+  registerUserInCentralDb(currentUser);
+    checkDailyAttendance();
+    enterSanctuaryFromGateway();
+}
+
+function ensureAmrWalletSession(user) {
+  if (!window.AmrWallet) return Promise.resolve(null);
+  if (AmrWallet.signedIn()) {
+    return AmrWallet.refresh().then((res) => {
+      updateCloudStatusBadge(true);
+      return res;
+    }).catch(() => null);
+  }
+  const email = (user && user.email) ? String(user.email).trim().toLowerCase() : 'arkaios2026@gmail.com';
+  return AmrWallet.login('email:' + email).then((res) => {
+    updateCloudStatusBadge(true);
+    checkDailyAttendance();
+    return res;
+  }).catch((err) => {
+    console.warn('Billetera AMR fallback:', err && err.message);
+    return null;
+  });
+}
+
+function handleEmailPasswordLogin() {
+  const emailInput = document.getElementById('gatewayEmail').value.trim();
+  const email = emailInput || 'operador@arkaios.ai';
+  const name = email.split('@')[0];
+  const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+
+  currentUser = {
+    id: 'user_' + btoa(email).replace(/=/g, '').slice(0, 12),
+    name: capitalized,
+    email: email,
+    picture: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`
+  };
+
+  localStorage.setItem('arkaios_current_user', JSON.stringify(currentUser));
+  updateUserUI();
+  loadUserStory();
+  registerUserInCentralDb(currentUser);
+  ensureAmrWalletSession(currentUser);
+  checkDailyAttendance();
+  enterSanctuaryFromGateway();
+  syncUserWithArkaiosCloud(currentUser, null);
+}
+
+function handleGuestOrRegister() {
+  currentUser = {
+    id: "guest_" + Date.now().toString(36),
+    name: "Operador Invitado",
+    email: "invitado@arkaios.ai",
+    picture: "https://api.dicebear.com/7.x/bottts/svg?seed=GuestArkaios"
+  };
+  localStorage.setItem('arkaios_current_user', JSON.stringify(currentUser));
+  updateUserUI();
+  loadUserStory();
+  registerUserInCentralDb(currentUser);
+  checkDailyAttendance();
+  enterSanctuaryFromGateway();
+  syncUserWithArkaiosCloud(currentUser, null);
+}
+
+function logoutToGateway() {
+  try {
+    localStorage.removeItem('arkaios_current_user');
+    if (window.AmrWallet) AmrWallet.logout();
+  } catch(e) {}
+  
+  currentUser = {
+    id: "local_guest",
+    name: "Operador Local",
+    email: "local@arkaios.vault",
+    picture: "https://api.dicebear.com/7.x/bottts/svg?seed=Arkaios"
+  };
+  
+  updateUserUI();
+
+  // Cerrar cualquier modal que esté abierto
+  const modals = document.querySelectorAll('.modal-overlay, #userModal, #memoryCardModal, #passportModal, #bazaarModal, #historyModal, #privateGalleryModal');
+  modals.forEach(m => {
+    if (m) m.style.display = 'none';
+  });
+
+  showGateway();
+
+  // Recarga ligera para garantizar un estado 100% limpio en la pantalla de bienvenida
+  setTimeout(() => {
+    window.location.reload();
+  }, 150);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.ApartmentMap) ApartmentMap.mount(document.getElementById('aptMap'));
+  const savedUser = localStorage.getItem('arkaios_current_user');
+  let hasValidSession = false;
+  if (savedUser) {
+    try {
+      const parsed = JSON.parse(savedUser);
+      if (parsed && parsed.id && parsed.id !== "local_guest") {
+        currentUser = parsed;
+        updateUserUI();
+        hasValidSession = true;
+      }
+    } catch(e) {}
+  }
+
+  loadUserStory();
+  startPlaytimeTimer();
+
+  if (hasValidSession) {
+    registerUserInCentralDb(currentUser);
+    ensureAmrWalletSession(currentUser);
+    checkDailyAttendance();
+    enterSanctuaryFromGateway();
+    syncUserWithArkaiosCloud(currentUser, null);
+  } else {
+    showGateway();
+  }
+});
+
+function loadUserStory() {
+  const storeKey = `boveda_fragiles_save_${currentUser.id}`;
+  const saved = localStorage.getItem(storeKey);
+  if (saved) {
+    try {
+      userState = JSON.parse(saved);
+      userState.busy = false;  // the save happens mid-turn; a reload must not leave the story locked
+      // Fallback flags
+      if (!userState.flags) {
+        userState.flags = { hypothermia_halted: true, dry_clothes: true, hot_cinnamon_tea: false, notebook_mentioned: false, deep_trust: false };
+      }
+      if (!userState.milestone) userState.milestone = "Llegada al Refugio";
+      renderAllHistory();
+      checkUnlocks();
+      updateStatus();
+      return;
+    } catch(e) {}
+  }
+  // Nueva partida
+  resetToFreshGame();
+}
+
+function resetToFreshGame() {
+  userState = {
+    chapter: 1,
+    bondPercent: 20,
+    history: [],
+    busy: false,
+    unlocked: ['yukiho_cover.jpg'],
+    playtimeSeconds: 0,
+    milestone: "Llegada al Refugio",
+    flags: { hypothermia_halted: true, dry_clothes: true, hot_cinnamon_tea: false, notebook_mentioned: false, deep_trust: false }
+  };
+  document.getElementById('dialogLog').innerHTML = '';
+  applyScene(SCENE_1, null);
+}
+
+function saveUserStory(triggerCloud = true) {
+  const storeKey = `boveda_fragiles_save_${currentUser.id}`;
+  localStorage.setItem(storeKey, JSON.stringify(userState));
+  checkUnlocks();
+  // Auto-guardar en Ranura 0 de Memory Card
+  saveToSlot(0, true);
+  if (triggerCloud) {
+    pushStateToArkaiosCloud();
+  }
+}
+
+// ── GOOGLE LOGIN CALLBACK ─────────────────────────────────────
+function handleGoogleLogin(response) {
+  try {
+    const payload = decodeJwt(response.credential);
+    currentUser = {
+      id: payload.sub,
+      name: payload.name || "Usuario Google",
+      email: payload.email,
+      picture: payload.picture || ""
+    };
+    if (userState && !userState.protagonistName) {
+      userState.protagonistName = currentUser.name.split(' ')[0];
+    }
+    localStorage.setItem('arkaios_current_user', JSON.stringify(currentUser));
+    updateUserUI();
+    loadUserStory();
+    // TRANSICIÓN INMEDIATA AL SANTUARIO
+    registerUserInCentralDb(currentUser);
+    checkDailyAttendance();
+    enterSanctuaryFromGateway();
+    // Sincronización inmediata con la base de datos de Arkaios World
+    syncUserWithArkaiosCloud(currentUser, response.credential);
+    // Sesión de la billetera AMR (el servidor verifica el token de Google)
+    if (window.AmrWallet) {
+      AmrWallet.login(response.credential).then(() => checkDailyAttendance()).catch((err) => console.warn('Billetera AMR:', err.message));
+    }
+  } catch(e) {
+    console.error("Error al procesar login de Google", e);
+    // Asegurar que si hubo sesión válida igualmente ingrese
+    registerUserInCentralDb(currentUser);
+    checkDailyAttendance();
+    enterSanctuaryFromGateway();
+  }
+}
+
+function decodeJwt(token) {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
+}
+
+function updateUserUI() {
+  if (currentUser.id !== "local_guest") {
+    document.getElementById('googleBtnContainer').style.display = 'none';
+    const badge = document.getElementById('userProfileBadge');
+    badge.style.display = 'flex';
+    document.getElementById('userProfilePic').src = currentUser.picture;
+    document.getElementById('userProfileName').textContent = currentUser.name.split(' ')[0];
+    document.getElementById('statUser').textContent = `👤 ${currentUser.name.split(' ')[0]}`;
+  }
+}
+
+// ── SISTEMA DE DESBLOQUEO ─────────────────────────────────────
+function checkUnlocks() {
+  if (userState.bondPercent >= 30) unlockItem('unlock1', 'badge1');
+  if (userState.bondPercent >= 50) unlockItem('unlock2', 'badge2');
+  if (userState.bondPercent >= 75) unlockItem('unlock3', 'badge3');
+}
+
+function unlockItem(elemId, badgeId) {
+  const el = document.getElementById(elemId);
+  const bg = document.getElementById(badgeId);
+  if (el) el.classList.remove('locked');
+  if (bg) bg.style.display = 'none';
+}
+
+function viewUnlock(imgName, title) {
+  document.getElementById('mainArt').src = `assets/images/${imgName}`;
+}
+
+// ── RENDERIZADO DEL DIÁLOGO Y COHERENCIA ──────────────────────
+function applyScene(data, playerChoice) {
+  // Evaluador de coherencia narrativa por palabras clave
+  evaluateCoherenceFlags(playerChoice, data);
+
+  userState.history.push({
+    chapter: userState.chapter,
+    timestamp: new Date().toISOString(),
+    playtimeOffset: userState.playtimeSeconds,
+    milestone: userState.milestone,
+    playerChoice: playerChoice,
+    narration: data.narration,
+    dialogue: data.dialogue,
+    bondAfter: userState.bondPercent + (data.bond_change || 0),
+    options: data.options || []
+  });
+
+  if (data.bond_change) {
+    userState.bondPercent = Math.min(userState.bondPercent + data.bond_change, 100);
+  }
+
+  updateStatus(data.status_text);
+  appendDialog(data, playerChoice);
+  renderOptions(data.options);
+  if (window.ApartmentMap) userState.location = ApartmentMap.track(userState, data, playerChoice);
+
+  userState.chapter++;
+  saveUserStory();
+}
+
+function evaluateCoherenceFlags(playerChoice, data) {
+  if (!userState.flags) {
+    userState.flags = { hypothermia_halted: true, dry_clothes: true, hot_cinnamon_tea: false, notebook_mentioned: false, deep_trust: false };
+  }
+  const combined = ((playerChoice || '') + ' ' + (data.narration || '') + ' ' + (data.dialogue || '')).toLowerCase();
+
+  if (combined.includes('té') || combined.includes('canela') || combined.includes('taza') || combined.includes('sorbo')) {
+    userState.flags.hot_cinnamon_tea = true;
+    userState.milestone = "☕ Calidez y Té de Canela";
+  }
+  if (combined.includes('cuaderno') || combined.includes('poema') || combined.includes('escrib') || combined.includes('secreto')) {
+    userState.flags.notebook_mentioned = true;
+    userState.milestone = "📖 Confidencia y Cuaderno";
+  }
+  if (userState.bondPercent >= 50 && !userState.flags.deep_trust) {
+    userState.milestone = "🛡️ Refugio y Alivio Compartido";
+  }
+  if (userState.bondPercent >= 80) {
+    userState.flags.deep_trust = true;
+    userState.milestone = "🌸 Sanación y Vínculo Sincero";
+  }
+}
+
+function updateStatus(statusText) {
+  const bondColor = userState.bondPercent > 60 ? 'var(--accent-teal)' : 'var(--accent-amber)';
+  document.getElementById('statBond').style.color = bondColor;
+  document.getElementById('statBond').textContent = `🛡️ Confianza (${userState.bondPercent}%)`;
+  if (statusText) document.getElementById('statStatus').textContent = `☕ ${statusText}`;
+  
+  const elMilestone = document.getElementById('statMilestone');
+  if (elMilestone && userState.milestone) {
+    elMilestone.textContent = userState.milestone;
+  }
+  const elTime = document.getElementById('statPlaytime');
+  if (elTime) {
+    elTime.textContent = '⏱️ ' + formatPlaytime(userState.playtimeSeconds);
+  }
+}
+
+function appendDialog(data, playerChoice) {
+  const box = document.getElementById('dialogLog');
+  const msg = document.createElement('div');
+  msg.className = 'msg-block';
+
+  let html = `<div class="msg-header"><span>ESCENA ${userState.chapter} // LA BÓVEDA DE LOS FRÁGILES</span></div>`;
+  if (playerChoice) {
+    html += `<div class="player-quote">▶ <strong>${escapeHtml(getProtagonistName())}:</strong> ${escapeHtml(playerChoice)}</div>`;
+  }
+  html += `<div class="narration">${escapeHtml(data.narration)}</div>`;
+  if (data.dialogue) {
+    html += `
+      <div class="quote-yukiho">
+        <div class="speaker-label">🌸 YUKIHO (19 AÑOS)</div>
+        ${escapeHtml(data.dialogue)}
+      </div>`;
+  }
+
+  msg.innerHTML = html;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function renderAllHistory() {
+  if (window.ApartmentMap && userState) ApartmentMap.restore(userState.location, userState);
+  const box = document.getElementById('dialogLog');
+  box.innerHTML = '';
+  userState.history.forEach(item => {
+    const msg = document.createElement('div');
+    msg.className = 'msg-block';
+    let html = `<div class="msg-header"><span>ESCENA ${item.chapter} // ${item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : ''}</span></div>`;
+    if (item.playerChoice) {
+      html += `<div class="player-quote">▶ <strong>${escapeHtml(getProtagonistName())}:</strong> ${escapeHtml(item.playerChoice)}</div>`;
+    }
+    html += `<div class="narration">${escapeHtml(item.narration)}</div>`;
+    if (item.dialogue) {
+      html += `
+        <div class="quote-yukiho">
+          <div class="speaker-label">🌸 YUKIHO (19 AÑOS)</div>
+          ${escapeHtml(item.dialogue)}
+        </div>`;
+    }
+    msg.innerHTML = html;
+    box.appendChild(msg);
+  });
+  box.scrollTop = box.scrollHeight;
+  updateStatus();
+  // Saved games used to come back without answer options: restore the last scene's options.
+  const lastScene = userState.history[userState.history.length - 1];
+  const savedOptions = lastScene && lastScene.options && lastScene.options.length ? lastScene.options : null;
+  renderOptions(savedOptions || (window.ApartmentMap ? ApartmentMap.cleanScene({}).options : SCENE_1.options));
+  if (window.ApartmentMap) ApartmentMap.renderLog(userState);
+}
+
+function renderOptions(opts) {
+  const prompt = document.getElementById('answerPrompt');
+  if (prompt) prompt.textContent = `¿Qué le respondes a Yukiho, ${getProtagonistName()}?`;
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+  if (!opts || !opts.length) return;
+
+  opts.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="num">${idx+1}</span> <span>${escapeHtml(opt)}</span>`;
+    btn.onclick = () => choose(opt);
+    container.appendChild(btn);
+  });
+}
+
+// ── PROCESAMIENTO CON POLLINATIONS OPENAI ─────────────────────
+async function choose(text) {
+  if (userState.busy) return;
+  setBusy(true);
+
+  try {
+    const res = await fetchAI(text);
+    applyScene(res, text);
+  } catch(err) {
+    alert("Error de conexión con la IA. Intenta de nuevo.");
+  } finally {
+    setBusy(false);
+  }
+}
+
+function submitCustomAction() {
+  const inp = document.getElementById('customInput');
+  const val = inp.value.trim();
+  if (!val || userState.busy) return;
+  inp.value = '';
+  choose(val);
+}
+
+function setBusy(val) {
+  userState.busy = val;
+  document.getElementById('btnSend').disabled = val;
+  document.querySelectorAll('.opt-btn').forEach(b => b.disabled = val);
+}
+
+async function fetchAI(playerText) {
+  const coherenceBlock = `
+[COHERENCIA NARRATIVA VIGENTE EN CANCÚN]:
+- Tiempo acumulado en el departamento: ${formatPlaytime(userState.playtimeSeconds)}.
+- Hito actual: "${userState.milestone}".
+- Hechos establecidos:
+  * El personaje del jugador se llama ${getProtagonistName()}; llámalo siempre así.
+  * Yukiho está vestida con ropa seca y limpia de ${getProtagonistName()}. No tiene frío.
+  * Té caliente de canela: ${userState.flags?.hot_cinnamon_tea ? "Servido y disfrutado con gratitud." : "En proceso de ofrecerse."}
+  * Cuaderno de poemas: ${userState.flags?.notebook_mentioned ? "Tratado con respeto y tacto." : "Oculto discretamente."}
+  * Confianza alcanzada: ${userState.bondPercent}%.
+- CONTINUIDAD OBLIGATORIA: Jamás reiniciar la conversación ni preguntar cosas ya resueltas. Avanzar la intimidad emocional con respeto.`;
+
+  const messages = [
+    { role: 'system', content: SYSTEM_LORE + '\n' + coherenceBlock + (window.ApartmentMap ? ApartmentMap.promptFor(userState) : '') },
+    ...userState.history.slice(-4).map(h => ({
+      role: 'assistant',
+      content: JSON.stringify({ narration: h.narration, dialogue: h.dialogue })
+    })),
+    {
+      role: 'user',
+      content: `[Capítulo ${userState.chapter}, Confianza: ${userState.bondPercent}%, Hito: ${userState.milestone}]
+${getProtagonistName()} responde: "${playerText}"
+
+Continúa la historia en Cancún con total coherencia. Responde en JSON estricto.`
+    }
+  ];
+
+  const res = await fetch('https://text.pollinations.ai/openai/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: messages,
+      model: 'openai',
+      response_format: { type: 'json_object' }
+    })
+  });
+
+  if (!res.ok) throw new Error("Fallo en IA");
+  const data = await res.json();
+  const raw = data.choices[0]?.message?.content || '{}';
+  try {
+    const parsed = JSON.parse(raw.replace(/```json/gi, '').replace(/```/g, '').trim());
+    return window.ApartmentMap ? ApartmentMap.cleanScene(parsed) : parsed;
+  } catch(e) {
+    // The model often returns slightly broken JSON: recover each field before using the canned scene.
+    const salvaged = window.ApartmentMap ? ApartmentMap.salvageJson(raw) : null;
+    if (salvaged) return ApartmentMap.cleanScene(salvaged);
+    return {
+      narration: "Yukiho toma la taza de té caliente con ambas manos, suspirando con alivio mientras la lluvia tropical azota los cristales del balcón en Cancún.",
+      dialogue: `«Gracias por cuidarme, ${getProtagonistName()}... Por primera vez en mucho tiempo siento que puedo respirar y estar a salvo.»`,
+      bond_change: 10,
+      status_text: "Sosteniendo el té caliente",
+      options: [
+        "Acompañarla en silencio mientras bebe el té caliente.",
+        "Ofrecerle cenar algo ligero para recuperar fuerzas.",
+        "Preguntarle suavemente si le gustaría hablar de lo que la trajo a Cancún."
+      ]
+    };
+  }
+}
+
+// ── MEMORY CARD VIRTUAL (SLOTS & SAVES) ────────────────────────
+
+// ── CATÁLOGOS DEL BAZAR AMR, TÓMBOLA JAPONESA Y VESTIDOR ────────
+// Paridad: 1 AMR = $1 MXN
+const GACHAPON_COST_SINGLE = 5; // $5 AMR ($5 MXN)
+const GACHAPON_COST_MULTI = 45; // $45 AMR (10 tiros)
+const PASSION_ROUTE_COST = 50;  // $50 AMR ($50 MXN)
+
+const OUTFITS_CATALOG = [
+  {
+    id: "ropa_descanso",
+    name: "Playera Holgada y Toalla",
+    desc: "Ropa limpia de descanso prestada tras salir del baño caliente.",
+    price: 0,
+    image: "assets/images/yukiho_cover.jpg",
+    tags: "🌧️ Casual · Algodón"
+  },
+  {
+    id: "bata_seda",
+    name: "Bata de Seda Nocturna",
+    desc: "Pijama suave de seda para dormir cálidamente en el departamento.",
+    price: 15,
+    image: "assets/images/726405907_2640571709671212_8412490664072817153_n.jpg",
+    tags: "🌙 Confort · Intimidad"
+  },
+  {
+    id: "vestido_noche",
+    name: "Vestido City Pop 80s",
+    desc: "Vestido clásico elegante para cenar a la luz tenue del balcón.",
+    price: 25,
+    image: "assets/images/728152510_2090992545100327_4218115781617602996_n.jpg",
+    tags: "👗 Elegante · Noche"
+  },
+  {
+    id: "yukata_verano",
+    name: "Yukata Tradicional Japonesa",
+    desc: "Un delicado recuerdo nostálgico de su hogar con motivos florales.",
+    price: 30,
+    image: "assets/images/730628673_36556836213932066_1261944441750915919_n.jpg",
+    tags: "👘 Tradicional · Japón"
+  },
+  {
+    id: "conjunto_caribeno",
+    name: "Conjunto Veraniego Cancún",
+    desc: "Atuendo fresco tropical para sentir la brisa caribeña.",
+    price: 35,
+    image: "assets/images/fNFIK.jpg",
+    tags: "🌊 Tropical · Caribe"
+  }
+];
+
+const GACHA_BALL_POOL = [
+  // ⚪ BLANCA - COMÚN (45%)
+  { rarity: "white", color: "#cbd5e1", label: "Común", name: "Té de Canela Extra Caliente", icon: "🍵", desc: "Le sirves una taza humeante extra que le devuelve la calidez (+5% Confianza)", effect: () => { userState.bondPercent = Math.min(userState.bondPercent + 5, 100); } },
+  { rarity: "white", color: "#cbd5e1", label: "Común", name: "Toalla Tibia de Algodón", icon: "🧖‍♀️", desc: "Un detalle acogedor para secar la humedad de la lluvia (+5% Confianza)", effect: () => { userState.bondPercent = Math.min(userState.bondPercent + 5, 100); } },
+  { rarity: "white", color: "#cbd5e1", label: "Común", name: "Dulce Artesanal de Frutas", icon: "🍬", desc: "Un pequeño caramelo que le dibuja una sonrisa tímida (+5% Confianza)", effect: () => { userState.bondPercent = Math.min(userState.bondPercent + 5, 100); } },
+
+  // 🟢 VERDE - POCO COMÚN (30%)
+  { rarity: "green", color: "#22c55e", label: "Poco Común", name: "Suéter Grueso de Lana", icon: "🧣", desc: "Le regalas un suéter abrigador que ahuyenta todo frío (+12% Confianza)", effect: () => { userState.bondPercent = Math.min(userState.bondPercent + 12, 100); userState.milestone = "🧣 Calidez y Suéter de Lana"; } },
+  { rarity: "green", color: "#22c55e", label: "Poco Común", name: "Pañuelo de Seda Bordado", icon: "🌸", desc: "Para secar con ternura cualquier lágrima de la tormenta (+10% Confianza)", effect: () => { userState.bondPercent = Math.min(userState.bondPercent + 10, 100); } },
+  { rarity: "green", color: "#22c55e", label: "Poco Común", name: "Pluma Estilográfica y Tinta", icon: "✒️", desc: "Un obsequio para que anote sus pensamientos nocturnos (+10% Confianza)", effect: () => { userState.bondPercent = Math.min(userState.bondPercent + 10, 100); } },
+
+  // 🔵 AZUL - RARA (15%)
+  { rarity: "blue", color: "#3b82f6", label: "Rara", name: "Té Reserva Flor de Cerezo", icon: "🫖", desc: "Aroma nostálgico de Japón que despierta sus confidencias (+15% Confianza)", effect: () => { userState.bondPercent = Math.min(userState.bondPercent + 15, 100); userState.flags.hot_cinnamon_tea = true; } },
+  { rarity: "blue", color: "#3b82f6", label: "Rara", name: "Bata de Seda Nocturna", icon: "🌙", type: "outfit", outfitId: "bata_seda", desc: "¡Atuendo Ganado! Pijama delicado de seda para descansar en Cancún.", effect: () => { addOutfitToInventory('bata_seda'); } },
+
+  // 🟣 PÚRPURA - ÉPICA (7%)
+  { rarity: "purple", color: "#a855f7", label: "Épica", name: "Vestido City Pop 80s", icon: "👗", type: "outfit", outfitId: "vestido_noche", desc: "¡Atuendo Épico! Vestido clásico elegante para cenar a media luz.", effect: () => { addOutfitToInventory('vestido_noche'); } },
+  { rarity: "purple", color: "#a855f7", label: "Épica", name: "Yukata Tradicional Japonesa", icon: "👘", type: "outfit", outfitId: "yukata_verano", desc: "¡Atuendo Épico! Traje tradicional floral de su tierra natal.", effect: () => { addOutfitToInventory('yukata_verano'); } },
+  { rarity: "purple", color: "#a855f7", label: "Épica", name: "Conjunto Veraniego Cancún", icon: "🌊", type: "outfit", outfitId: "conjunto_caribeno", desc: "¡Atuendo Épico! Ropa fresca tropical caribeña.", effect: () => { addOutfitToInventory('conjunto_caribeno'); } },
+
+  // 🟡 DORADA - LEGENDARIA (3%)
+  { rarity: "gold", color: "#eab308", label: "Legendaria", name: "Llave Dorada del Santuario", icon: "🗝️", type: "route", desc: "¡PREMIO MAYOR! Desbloqueo total de la Ruta de Pasión & Romance Maduro.", effect: () => { unlockPassionRoute(); } }
+];
+
+let currentBazaarTab = 'gacha';
+let isSpinningGacha = false;
+
+function getProtagonistName() {
+  return (userState && userState.protagonistName) || (currentUser && currentUser.name) || "Jugador";
+}
+
+function editProtagonistName() {
+  const current = getProtagonistName();
+  const nuevo = prompt("Ingresa el nombre, alias o nick de tu Protagonista:", current);
+  if (nuevo && nuevo.trim()) {
+    userState.protagonistName = nuevo.trim();
+    saveUserStory();
+    updateUserUI();
+    const qTitle = document.getElementById('panelQuestionTitle');
+    if (qTitle) qTitle.textContent = `¿Qué le respondes a Yukiho, ${getProtagonistName()}?`;
+    alert(`¡Nombre de protagonista actualizado a: "${userState.protagonistName}"!`);
+  }
+}
+
+function quickLoginArkaios() {
+  currentUser = {
+    id: "arkaios_admin_2026",
+    name: "arkaios2026",
+    email: "arkaios2026@gmail.com",
+    picture: "https://api.dicebear.com/7.x/bottts/svg?seed=Arkaios2026"
+  };
+  localStorage.setItem('arkaios_current_user', JSON.stringify(currentUser));
+  updateUserUI();
+  loadUserStory();
+  registerUserInCentralDb(currentUser);
+  ensureAmrWalletSession(currentUser);
+  checkDailyAttendance();
+  enterSanctuaryFromGateway();
+  syncUserWithArkaiosCloud(currentUser, null);
+}
+
+
+// ── ARKAIOS PASSPORT & RETENCIÓN DE USUARIOS ─────────────────
+function getArkaiosPassportId(userId) {
+  let hash = 0;
+  const str = String(userId || "guest");
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'ARK-' + Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
+}
+
+function registerUserInCentralDb(user) {
+  try {
+    const raw = localStorage.getItem('arkaios_global_users_db');
+    let db = raw ? JSON.parse(raw) : [];
+    const arkId = getArkaiosPassportId(user.id);
+    
+    const existingIdx = db.findIndex(u => u.email === user.email || u.id === user.id);
+    const userRecord = {
+      id: user.id,
+      arkaiosId: arkId,
+      name: user.name || "Usuario",
+      email: user.email || "local@arkaios.vault",
+      registeredAt: existingIdx !== -1 ? db[existingIdx].registeredAt : new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+      streak: (userState && userState.loginStreak) || 1,
+      amrBalance: (userState && userState.amrBalance) || 25,
+      newsletterOptin: true
+    };
+
+    if (existingIdx !== -1) {
+      db[existingIdx] = { ...db[existingIdx], ...userRecord };
+    } else {
+      db.push(userRecord);
+    }
+    localStorage.setItem('arkaios_global_users_db', JSON.stringify(db));
+  } catch(e) {
+    console.warn("Could not register user in central db", e);
+  }
+}
+
+function openPassportModal() {
+  updatePassportUI();
+  document.getElementById('passportModal').style.display = 'flex';
+}
+
+function closePassportModal() {
+  document.getElementById('passportModal').style.display = 'none';
+}
+
+function updatePassportUI() {
+  const arkId = getArkaiosPassportId(currentUser.id);
+  const avatarEl = document.getElementById('passportAvatar');
+  const nameEl = document.getElementById('passportName');
+  const emailEl = document.getElementById('passportEmail');
+  const idEl = document.getElementById('passportIdBadge');
+  const amrEl = document.getElementById('passportAmrDisplay');
+  const streakEl = document.getElementById('passportStreakDisplay');
+
+  if (avatarEl) avatarEl.src = currentUser.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser.name}`;
+  if (nameEl) nameEl.textContent = currentUser.name;
+  if (emailEl) emailEl.textContent = currentUser.email;
+  if (idEl) idEl.textContent = arkId;
+  const bal = userState.amrBalance !== undefined ? userState.amrBalance : 25;
+  if (amrEl) amrEl.textContent = `🪙 ${bal} AMR ($${bal} MXN)`;
+  const st = userState.loginStreak || 1;
+  if (streakEl) streakEl.textContent = `🔥 ${st} día${st > 1 ? 's' : ''}`;
+}
+
+function toggleNewsletterOptin(checked) {
+  try {
+    const raw = localStorage.getItem('arkaios_global_users_db');
+    let db = raw ? JSON.parse(raw) : [];
+    const idx = db.findIndex(u => u.id === currentUser.id || u.email === currentUser.email);
+    if (idx !== -1) {
+      db[idx].newsletterOptin = checked;
+      localStorage.setItem('arkaios_global_users_db', JSON.stringify(db));
+    }
+  } catch(e) {}
+}
+
+function exportUsersDatabaseCsv() {
+  try {
+    const raw = localStorage.getItem('arkaios_global_users_db');
+    let db = raw ? JSON.parse(raw) : [];
+    if (!db.length) {
+      // Registrar el usuario actual
+      registerUserInCentralDb(currentUser);
+      db = JSON.parse(localStorage.getItem('arkaios_global_users_db') || '[]');
+    }
+
+    const headers = ["EMAIL", "NOMBRE", "ARKAIOS_ID", "SALDO_AMR_MXN", "FECHA_REGISTRO", "ULTIMO_ACCESO", "RACHA_DIAS", "BOLETIN_OPTIN"];
+    const rows = db.map(u => [
+      `"${u.email}"`,
+      `"${(u.name || '').replace(/"/g, '""')}"`,
+      `"${u.arkaiosId}"`,
+      u.amrBalance || 25,
+      `"${u.registeredAt}"`,
+      `"${u.lastLogin}"`,
+      u.streak || 1,
+      u.newsletterOptin ? "SI" : "NO"
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `directorio_usuarios_arkaios_brevo_${Date.now()}.csv`;
+    a.click();
+  } catch(err) {
+    alert("Error al exportar base de datos: " + err.message);
+  }
+}
+
+// Bono diario: lo decide el servidor (+5 AMR al día, +25 cada 7 días de racha, hora de Cancún).
+async function checkDailyAttendance() {
+  if (!currentUser || currentUser.id === 'local_guest' || !window.AmrWallet || !AmrWallet.signedIn()) return;
+  try {
+    const { wallet } = await AmrWallet.daily();
+    userState.loginStreak = wallet.streak;
+    registerUserInCentralDb(currentUser);
+    if (!wallet.granted) return;
+    const extraMsg = wallet.amount > 5 ? ` ¡Bono de Racha Semanal (+${wallet.amount - 5} AMR extra)!` : '';
+    setTimeout(() => {
+      alert(`🎉 ¡Bono de Asistencia Diaria ARKAIOS!\n\nHas recibido +$5 AMR ($5 MXN) gratis para tu tirada de hoy en la Tómbola.${extraMsg}\n🔥 Racha de asistencia: ${wallet.streak} día${wallet.streak > 1 ? 's' : ''}.`);
+    }, 600);
+  } catch (e) {
+    console.warn('Bono diario AMR:', e.message);
+  }
+}
+
+function openBazaarModal() {
+  document.getElementById('bazaarModal').style.display = 'flex';
+  currentBazaarTab = 'gacha';
+  switchBazaarTab('gacha');
+  updateBazaarUI();
+}
+
+function closeBazaarModal() {
+  document.getElementById('bazaarModal').style.display = 'none';
+  // Pause any gacha video
+  const vid = document.getElementById('gachaVideo');
+  if (vid) {
+    vid.pause();
+    vid.currentTime = 0;
+  }
+}
+
+function switchBazaarTab(tab) {
+  currentBazaarTab = tab;
+  const tabGacha = document.getElementById('tabBtnGacha');
+  const tabOutfits = document.getElementById('tabBtnOutfits');
+  const tabRoute = document.getElementById('tabBtnRoute');
+
+  if (tabGacha) tabGacha.classList.toggle('active', tab === 'gacha');
+  if (tabOutfits) tabOutfits.classList.toggle('active', tab === 'outfits');
+  if (tabRoute) tabRoute.classList.toggle('active', tab === 'route');
+
+  renderBazaarContent();
+}
+
+function updateBazaarUI() {
+  const balance = userState.amrBalance !== undefined ? userState.amrBalance : 25;
+  const elNav = document.getElementById('statAmrNav');
+  const elMod = document.getElementById('modalAmrBalance');
+  if (elNav) elNav.textContent = balance;
+  if (elMod) elMod.textContent = `🪙 ${balance} AMR ($${balance} MXN)`;
+  renderBazaarContent();
+}
+
+function renderBazaarContent() {
+  const container = document.getElementById('bazaarTabContentArea');
+  if (!container) return;
+
+  const balance = userState.amrBalance !== undefined ? userState.amrBalance : 25;
+  const inventory = userState.inventory || ['ropa_descanso'];
+  const hasRoute = (userState.unlockedRoutes && userState.unlockedRoutes.includes('passion_adult_route')) || inventory.includes('llave_pasion');
+
+  if (currentBazaarTab === 'gacha') {
+    container.innerHTML = `
+      <div class="gacha-stage-interactive">
+        <div style="font-size:13px; color:#c084fc; font-weight:800; letter-spacing:1px; text-transform:uppercase;">
+          🎰 Tómbola Tradicional de Pelotitas (1 AMR = $1 MXN)
+        </div>
+        <small style="color:var(--text-muted); text-align:center; max-width:440px;">
+          Gira la manivela de la máquina por <strong>$5 AMR ($5 pesos)</strong> para liberar una cápsula con regalos, vestidos o la Llave Dorada.
+        </small>
+
+        <!-- VISOR DEL MINIJUEGO VISUAL (MÁQUINA / VIDEO / CÁPSULA) -->
+        <div class="gacha-visual-container" id="gachaVisualBox">
+          <img id="gachaMachineImg" src="assets/gacha/00.png" class="gacha-machine-img" alt="Máquina de Gachapon">
+          <video id="gachaVideo" class="gacha-video-anim" playsinline preload="auto">
+            <source src="assets/gacha/gacha_anim.mp4" type="video/mp4">
+          </video>
+          <img id="gachaCapsuleImg" src="assets/gacha/01.jpg" class="gacha-capsule-anim" alt="Cápsula de Gachapon">
+          <img id="gachaOpenImg" src="assets/gacha/02.jpg" class="gacha-capsule-anim" alt="Cápsula Abierta con Destellos">
+        </div>
+
+        <div id="gachaStatusText" style="font-size:12px; color:var(--accent-teal); font-weight:600; min-height:18px;">
+          ¡Lista para girar! Pulsa un botón abajo
+        </div>
+
+        <!-- BOTONES DE TIRO -->
+        <div class="gacha-actions-row">
+          <button class="gacha-spin-btn single" onclick="spinGachapon(1)" id="btnSpinSingle">
+            🎲 Girar 1 Vez ($5 AMR)
+          </button>
+          <button class="gacha-spin-btn multi" onclick="spinGachapon(10)" id="btnSpinMulti">
+            ✨ Tirada x10 ($45 AMR)
+          </button>
+        </div>
+
+        <!-- TABLA DE ESFERAS Y PROBABILIDADES -->
+        <div class="gacha-rates-table" style="max-width:540px;">
+          <span style="color:#cbd5e1;">⚪ Común (45%)</span>
+          <span style="color:#86efac;">🟢 Poco Común (30%)</span>
+          <span style="color:#93c5fd;">🔵 Rara (15%)</span>
+          <span style="color:#d8b4fe;">🟣 Épica (7%)</span>
+          <span style="color:#fef08a; font-weight:800;">🟡 Legendaria (3%)</span>
+        </div>
+      </div>
+    `;
+  } else if (currentBazaarTab === 'outfits') {
+    const equipped = userState.equippedOutfit || 'ropa_descanso';
+
+    container.innerHTML = `
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+        Los atuendos que ganes en la tómbola o compres aparecen aquí para vestir a Yukiho:
+      </div>
+      <div class="bazaar-grid">
+        ${OUTFITS_CATALOG.map(item => {
+          const isOwned = inventory.includes(item.id);
+          const isEquipped = equipped === item.id;
+          return `
+            <div class="bazaar-card ${isEquipped ? 'equipped' : ''}">
+              <img src="${item.image}" class="bazaar-card-img" alt="${item.name}">
+              <div style="font-size:10px; color:var(--accent-teal); font-weight:700;">${item.tags}</div>
+              <h4 class="bazaar-card-title">${escapeHtml(item.name)}</h4>
+              <div class="bazaar-card-desc">${escapeHtml(item.desc)}</div>
+              <div class="bazaar-card-footer">
+                <span class="bazaar-price">${isOwned ? 'En tu ropero' : '$' + item.price + ' AMR'}</span>
+                ${isEquipped ? 
+                  `<button class="bazaar-btn equipped">✓ Puesto</button>` :
+                  (isOwned ? 
+                    `<button class="bazaar-btn equip" onclick="equipOutfit('${item.id}')">👗 Vestir</button>` :
+                    `<button class="bazaar-btn buy" onclick="buyOutfitDirect('${item.id}', ${item.price})">Comprar ($${item.price} AMR)</button>`
+                  )
+                }
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } else if (currentBazaarTab === 'route') {
+    container.innerHTML = `
+      <div style="background:#090c15; border:1px solid rgba(168,85,247,0.3); border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:14px; text-align:center; align-items:center;">
+        <span style="font-size:48px;">🗝️</span>
+        <h3 style="font-family:'Playfair Display', serif; color:#fff; margin:0; font-size:20px;">
+          Ruta Oculta de Pasión & Romance Maduro
+        </h3>
+        <p style="font-size:13px; color:var(--text-muted); max-width:440px; margin:0; line-height:1.5;">
+          Abre la línea narrativa íntima, romántica y sin censura entre Yukiho y ${getProtagonistName()} en Cancún. Puedes desbloquearla <strong>directamente por $50 AMR ($50 MXN)</strong> o ganarla en la <strong>Tómbola de $5 AMR</strong> con la esfera dorada. Con cualquiera de las dos opciones es suficiente.
+        </p>
+
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; width:100%; max-width:360px;">
+          <div style="font-size:12px; color:var(--text-muted);">Estado de tu Cuenta:</div>
+          <strong style="font-size:16px; color:${hasRoute ? 'var(--accent-teal)' : 'var(--accent-rose)'};">
+            ${hasRoute ? '✓ DESBLOQUEADA Y ACTIVA' : '🔒 Bloqueada (Requiere Llave o Pase)'}
+          </strong>
+        </div>
+
+        ${hasRoute ? `
+          <div style="color:var(--accent-teal); font-weight:700; font-size:14px;">
+            ¡Ya tienes acceso total a la Ruta de Pasión! La IA responderá con romance íntimo cuando te acerques a ella.
+          </div>
+        ` : `
+          <button class="nav-btn" style="background:linear-gradient(90deg, #ec4899, #a855f7); color:#fff; font-weight:800; padding:12px 24px; font-size:14px; border:none;" onclick="unlockPassionRouteDirect()">
+            🗝️ Desbloquear Ruta Directa ($50 AMR / $50 MXN)
+          </button>
+        `}
+      </div>
+    `;
+  }
+}
+
+// Cobra en el servidor; true si se pagó. Los precios reales viven en api/_lib/ledger.js.
+async function payAmrItem(item) {
+  if (!window.AmrWallet || !AmrWallet.signedIn()) {
+    alert('🔐 ' + (window.AmrWallet ? AmrWallet.LOGIN_MSG : 'Billetera AMR no disponible.'));
+    return false;
+  }
+  try {
+    await AmrWallet.buy(item);
+    return true;
+  } catch (e) {
+    alert(e.message);
+    return false;
+  }
+}
+
+async function spinGachapon(count) {
+  if (isSpinningGacha) return;
+  isSpinningGacha = true;
+  const paid = await payAmrItem(count === 10 ? 'tombola_10' : 'tombola_1');
+  if (!paid) { isSpinningGacha = false; return; }
+
+  const machineImg = document.getElementById('gachaMachineImg');
+  const videoAnim = document.getElementById('gachaVideo');
+  const capsuleImg = document.getElementById('gachaCapsuleImg');
+  const openImg = document.getElementById('gachaOpenImg');
+  const statusTxt = document.getElementById('gachaStatusText');
+
+  // Disable buttons while spinning
+  const btn1 = document.getElementById('btnSpinSingle');
+  const btn10 = document.getElementById('btnSpinMulti');
+  if (btn1) btn1.disabled = true;
+  if (btn10) btn10.disabled = true;
+
+  // CICLO 1: Iniciar Animación de Giro (Video o rotación)
+  if (statusTxt) statusTxt.textContent = "🌀 ¡Girando la manivela de la máquina...!";
+  if (machineImg) machineImg.style.display = 'none';
+  if (capsuleImg) capsuleImg.style.display = 'none';
+  if (openImg) openImg.style.display = 'none';
+
+  if (videoAnim) {
+    videoAnim.style.display = 'block';
+    videoAnim.currentTime = 0;
+    videoAnim.play().catch(e => console.log('Video autoplay handled', e));
+  }
+
+  // CICLO 2: A los 1.3 segundos, cae la cápsula de color
+  setTimeout(() => {
+    if (videoAnim) {
+      videoAnim.pause();
+      videoAnim.style.display = 'none';
+    }
+    if (statusTxt) statusTxt.textContent = "✨ ¡Una cápsula ha caído por la compuerta...!";
+    if (capsuleImg) {
+      capsuleImg.style.display = 'block';
+    }
+
+    // CICLO 3: A los 2.0 segundos, la cápsula se abre con destellos dorados
+    setTimeout(() => {
+      if (capsuleImg) capsuleImg.style.display = 'none';
+      if (openImg) openImg.style.display = 'block';
+      if (statusTxt) statusTxt.textContent = "🌟 ¡La cápsula se abre! Revelando tu premio...";
+
+      // Revelación final
+      setTimeout(() => {
+        isSpinningGacha = false;
+        if (btn1) btn1.disabled = false;
+        if (btn10) btn10.disabled = false;
+
+        if (count === 1) {
+          const prize = rollSinglePrize();
+          prize.effect();
+          saveUserStory();
+          updateStatus();
+          updateBazaarUI();
+
+          alert(`🎉 ¡PELOTITA ${prize.label.toUpperCase()} OBTENIDA! 🎰\n\n${prize.icon} "${prize.name}"\n\n${prize.desc}`);
+        } else {
+          // Tirada x10
+          const results = [];
+          for (let i = 0; i < 10; i++) {
+            const prize = rollSinglePrize();
+            prize.effect();
+            results.push(prize);
+          }
+          saveUserStory();
+          updateStatus();
+          updateBazaarUI();
+
+          const listText = results.map(r => `• [${r.label}] ${r.icon} ${r.name}`).join('\n');
+          alert(`🎉 ¡TIRADA x10 COMPLETADA! 🎰\n\nPremios obtenidos:\n${listText}`);
+        }
+
+        // Restaurar máquina inicial
+        if (openImg) openImg.style.display = 'none';
+        if (machineImg) machineImg.style.display = 'block';
+        if (statusTxt) statusTxt.textContent = "¡Listo para tu siguiente tirada!";
+      }, 700);
+
+    }, 800);
+
+  }, 1300);
+}
+
+function rollSinglePrize() {
+  const rand = Math.random() * 100;
+  let pool;
+  if (rand < 3) {
+    // 3% Dorada Legendaria
+    pool = GACHA_BALL_POOL.filter(p => p.rarity === 'gold');
+  } else if (rand < 10) {
+    // 7% Purpura Épica
+    pool = GACHA_BALL_POOL.filter(p => p.rarity === 'purple');
+  } else if (rand < 25) {
+    // 15% Azul Rara
+    pool = GACHA_BALL_POOL.filter(p => p.rarity === 'blue');
+  } else if (rand < 55) {
+    // 30% Verde Poco Común
+    pool = GACHA_BALL_POOL.filter(p => p.rarity === 'green');
+  } else {
+    // 45% Blanca Común
+    pool = GACHA_BALL_POOL.filter(p => p.rarity === 'white');
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function addOutfitToInventory(outfitId) {
+  userState.inventory = userState.inventory || ['ropa_descanso'];
+  if (!userState.inventory.includes(outfitId)) {
+    userState.inventory.push(outfitId);
+  }
+}
+
+function unlockOutfitFromGacha(outfitId) {
+  addOutfitToInventory(outfitId);
+  const outfit = OUTFITS_CATALOG.find(o => o.id === outfitId);
+  if (outfit && confirm(`¡Has desbloqueado el atuendo: "${outfit.name}"! ¿Deseas que Yukiho se lo ponga ahora mismo?`)) {
+    equipOutfit(outfitId);
+  }
+}
+
+function unlockPassionRoute() {
+  userState.inventory = userState.inventory || ['ropa_descanso'];
+  if (!userState.inventory.includes('llave_pasion')) {
+    userState.inventory.push('llave_pasion');
+  }
+  userState.unlockedRoutes = userState.unlockedRoutes || [];
+  if (!userState.unlockedRoutes.includes('passion_adult_route')) {
+    userState.unlockedRoutes.push('passion_adult_route');
+  }
+  userState.milestone = "🗝️ Ruta de Pasión Desbloqueada";
+}
+
+async function unlockPassionRouteDirect() {
+  if (!(await payAmrItem('ruta_pasion'))) return;
+  unlockPassionRoute();
+  saveUserStory();
+  updateStatus();
+  updateBazaarUI();
+  alert("¡Felicitaciones! Has desbloqueado el acceso completo a la Ruta de Pasión & Romance Maduro.");
+}
+
+async function buyOutfitDirect(outfitId, price) {
+  if (!(await payAmrItem('outfit:' + outfitId))) return;
+  addOutfitToInventory(outfitId);
+  equipOutfit(outfitId);
+}
+
+function equipOutfit(outfitId) {
+  const outfit = OUTFITS_CATALOG.find(o => o.id === outfitId);
+  if (!outfit) return;
+
+  userState.equippedOutfit = outfitId;
+  document.getElementById('mainArt').src = outfit.image;
+
+  saveUserStory();
+  updateBazaarUI();
+  alert(`¡Yukiho se ha puesto su "${outfit.name}"! La historia y el retrato se han actualizado.`);
+}
+
+async function redeemAmrCodePrompt(directCode) {
+  const inputEl = document.getElementById('amrCodeInlineInput');
+  const fbEl = document.getElementById('amrCodeFeedback');
+  const showFeedback = (msg, ok) => {
+    if (fbEl) {
+      fbEl.style.display = 'block';
+      fbEl.style.background = ok ? 'rgba(16,185,129,0.14)' : 'rgba(239,68,68,0.14)';
+      fbEl.style.border = ok ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(239,68,68,0.4)';
+      fbEl.style.color = ok ? '#34d399' : '#fca5a5';
+      fbEl.textContent = msg;
+    }
+  };
+
+  let code = (typeof directCode === 'string' && directCode.trim())
+    ? directCode.trim()
+    : (inputEl && inputEl.value ? inputEl.value.trim() : '');
+
+  if (!code) {
+    const confirmNotice = confirm(
+      "⚖️ AVISO OFICIAL DE TÉRMINOS AMR:\n\n" +
+      "1. No hay reintegros ni devoluciones: El saldo cargado se convierte en moneda digital del juego y no puede regresar a MXN.\n" +
+      "2. Se aplican filtros de seguridad para prevenir compras por error o realizadas por menores.\n\n" +
+      "¿Confirmas que deseas continuar con la carga/canje de saldo AMR?"
+    );
+    if (!confirmNotice) return;
+    code = prompt("Ingresa tu código de recarga AMR (ej: ARKAIOS-FUNDADOR-2026):");
+    if (!code) return;
+  }
+
+  if (window.AmrWallet && !AmrWallet.signedIn()) {
+    await ensureAmrWalletSession(currentUser);
+  }
+  if (!window.AmrWallet || !AmrWallet.signedIn()) {
+    const errMsg = '🔐 ' + (window.AmrWallet ? AmrWallet.LOGIN_MSG : 'Billetera AMR no disponible.');
+    showFeedback(errMsg, false);
+    return;
+  }
+  try {
+    const { wallet } = await AmrWallet.redeem(code);
+    if (inputEl) inputEl.value = '';
+    updateCloudStatusBadge(true);
+    showFeedback(`✅ ¡Código validado exitosamente! Se acreditaron +${wallet.amount} AMR ($${wallet.amount} MXN). Nuevo saldo: ${wallet.balance} AMR.`, true);
+  } catch (e) {
+    showFeedback(`⚠️ ${e.message}`, false);
+  }
+}
+
+function openCollectionModal() {
+  switchCollectionTab('scenes');
+  document.getElementById('collectionModal').style.display = 'flex';
+}
+
+function closeCollectionModal() {
+  document.getElementById('collectionModal').style.display = 'none';
+}
+
+function switchCollectionTab(tab) {
+  currentCollectionTab = tab;
+  ['scenes', 'outfits', 'secrets', 'studio'].forEach(t => {
+    const btn = document.getElementById('colTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+  renderCollection();
+}
+
+function renderCollection() {
+  const container = document.getElementById('collectionMainArea');
+  if (!container) return;
+
+  const colData = getUserCollection();
+
+  if (currentCollectionTab === 'scenes') {
+    const scenes = [
+      { src: "assets/images/yukiho_cover.jpg", title: "Ilustración Oficial", sub: "STILL GAMES MX · Portada Canónica" },
+      { src: "assets/images/apartment_doorway.png", title: "Llegada al Refugio", sub: "Cancún · Primer Encuentro" },
+      { src: "assets/images/yukiho_default.png", title: "La Calidez del Té", sub: "Taza de Canela · Respiro" },
+      { src: "assets/images/yukiho_portrait.png", title: "El Cuaderno Secreto", sub: "Poemas Ocultos · Confidencia" }
+    ];
+
+    container.innerHTML = `
+      <div class="collection-grid">
+        ${scenes.map(s => `
+          <div class="collection-card" onclick="openLightbox('${s.src}')">
+            <img src="${s.src}" class="collection-card-img" alt="${s.title}">
+            <div class="collection-card-info">
+              <span class="collection-card-title">${escapeHtml(s.title)}</span>
+              <span class="collection-card-sub">${escapeHtml(s.sub)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (currentCollectionTab === 'outfits') {
+    const inventory = userState.inventory || ['ropa_descanso'];
+    const ownedOutfits = OUTFITS_CATALOG.filter(o => inventory.includes(o.id));
+
+    if (!ownedOutfits.length) {
+      container.innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center;">Aún no tienes atuendos adquiridos en el Bazar.</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="collection-grid">
+        ${ownedOutfits.map(o => `
+          <div class="collection-card" onclick="openLightbox('${o.image}')">
+            <img src="${o.image}" class="collection-card-img" alt="${o.name}">
+            <div class="collection-card-info">
+              <span class="collection-card-title">${escapeHtml(o.name)}</span>
+              <span class="collection-card-sub">${escapeHtml(o.tags)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (currentCollectionTab === 'secrets') {
+    const secrets = [
+      { src: "assets/images/726405907_2640571709671212_8412490664072817153_n.jpg", title: "Intimidad Nocturna", sub: "Bata de Seda · Cancún" },
+      { src: "assets/images/728152510_2090992545100327_4218115781617602996_n.jpg", title: "Cena a Media Luz", sub: "Vestido Elegante City Pop" },
+      { src: "assets/images/730628673_36556836213932066_1261944441750915919_n.jpg", title: "Melancolía y Flores", sub: "Yukata de Seda" },
+      { src: "assets/images/fNFIK.jpg", title: "Brisa de la Madrugada", sub: "Conjunto Veraniego" },
+      ...colData.customMods
+    ];
+
+    container.innerHTML = `
+      <div class="collection-grid">
+        ${secrets.map(s => `
+          <div class="collection-card" onclick="openLightbox('${s.src}')">
+            <img src="${s.src}" class="collection-card-img" alt="${s.title}">
+            <div class="collection-card-info">
+              <span class="collection-card-title">${escapeHtml(s.title)}</span>
+              <span class="collection-card-sub">${escapeHtml(s.sub)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else if (currentCollectionTab === 'studio') {
+    container.innerHTML = `
+      <div class="mod-studio-box">
+        <div style="font-size:14px; font-weight:700; color:#fff;">✨ Estudio de Creación de Fotos (Mod Studio Privado)</div>
+        <div style="font-size:12px; color:var(--text-muted); line-height:1.4;">
+          Genera nuevas ilustraciones personalizadas de Yukiho con IA para tu colección personal. Yukiho en el juego no sabrá de estas fotos.
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:11px; font-weight:700; color:#c084fc;">PRESET DE ESCENA:</label>
+          <select id="studioPresetSelect" class="mod-studio-input" onchange="applyStudioPreset(this.value)">
+            <option value="">-- Elige un concepto o escribe el tuyo --</option>
+            <option value="Yukiho mirando la lluvia en el balcon de Cancun, luz calida tenue">Yukiho mirando la lluvia en el balcón</option>
+            <option value="Yukiho sonriendo timidamente con una taza de te caliente">Yukiho con té caliente</option>
+            <option value="Yukiho sentada en el sofa leyendo su cuaderno de poemas">Yukiho leyendo su cuaderno</option>
+            <option value="Yukiho con vestido elegante de noche estilo anime clasico de los 80s">Yukiho en vestido de noche retro 80s</option>
+            <option value="Yukiho con bata suave de seda nocturna mirando a camara">Yukiho con bata de seda nocturna</option>
+          </select>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:11px; font-weight:700; color:#c084fc;">DESCRIPCIÓN DE LA IMAGEN:</label>
+          <input type="text" id="studioPromptInput" class="mod-studio-input" placeholder="Ej: Yukiho sonriendo bajo la suave luz caribena con un vestido blanco...">
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button class="nav-btn" style="flex:1; justify-content:center; background:linear-gradient(90deg, #ec4899, #a855f7); color:#fff; font-weight:700;" onclick="generateStudioImage()">
+            🎨 Generar y Guardar en Bóveda
+          </button>
+        </div>
+
+        <div id="studioResultArea" style="display:none; flex-direction:column; align-items:center; gap:8px; margin-top:8px;">
+          <img id="studioResultImg" style="max-height:220px; border-radius:10px; border:1px solid #c084fc;" src="">
+          <span style="font-size:12px; color:#5eead4;">✓ ¡Ilustración guardada con éxito en tu Bóveda Privada!</span>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function applyStudioPreset(val) {
+  if (val) document.getElementById('studioPromptInput').value = val;
+}
+
+function generateStudioImage() {
+  const inp = document.getElementById('studioPromptInput');
+  const idea = inp.value.trim() || "Yukiho mirando la lluvia en el balcon con mirada melancolica";
+  
+  const basePrompt = `retro 80s anime style, classic Japanese romance anime 1980s, 19 year old woman Yukiho, long black hair, large deep green eyes, ${idea}, aesthetic city pop, breathtaking details, high quality, masterpiece`;
+  const encoded = encodeURIComponent(basePrompt);
+  const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=768&height=1024&model=flux&nologo=true&seed=${Date.now() % 100000}`;
+
+  const col = getUserCollection();
+  col.customMods.unshift({
+    src: imageUrl,
+    title: idea.slice(0, 30) + '...',
+    sub: 'Creada con Mod Studio · ' + new Date().toLocaleDateString()
+  });
+  saveUserCollection(col);
+
+  const resArea = document.getElementById('studioResultArea');
+  const resImg = document.getElementById('studioResultImg');
+  if (resArea && resImg) {
+    resImg.src = imageUrl;
+    resArea.style.display = 'flex';
+  }
+
+  alert("¡Ilustración generada y archivada en tu Colección Privada!");
+}
+
+let activeLightboxSrc = "";
+
+function openLightbox(src) {
+  activeLightboxSrc = src;
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightboxOverlay').style.display = 'flex';
+}
+
+function closeLightbox() {
+  document.getElementById('lightboxOverlay').style.display = 'none';
+}
+
+function downloadLightboxImage() {
+  if (!activeLightboxSrc) return;
+  const a = document.createElement('a');
+  a.href = activeLightboxSrc;
+  a.download = `yukiho_coleccion_privada_${Date.now()}.jpg`;
+  a.target = '_blank';
+  a.click();
+}
+
+const TOTAL_SLOTS = 5; // 0 = Auto-save, 1..4 = Manual
+
+function getMemoryCardKey() {
+  return `arkaios_memcard_${currentUser.id}`;
+}
+
+function getMemoryCard() {
+  const key = getMemoryCardKey();
+  const raw = localStorage.getItem(key);
+  if (raw) {
+    try { return JSON.parse(raw); } catch(e) {}
+  }
+  // Inicializar tarjeta virgen
+  const newCard = {
+    userId: currentUser.id,
+    userName: currentUser.name,
+    version: "2.0",
+    createdAt: new Date().toISOString(),
+    slots: [
+      { id: 0, name: "⚡ Auto-Save (Continuo)", isAuto: true, data: null, savedAt: null },
+      { id: 1, name: "Ranura 1 (Manual)", isAuto: false, data: null, savedAt: null },
+      { id: 2, name: "Ranura 2 (Manual)", isAuto: false, data: null, savedAt: null },
+      { id: 3, name: "Ranura 3 (Manual)", isAuto: false, data: null, savedAt: null },
+      { id: 4, name: "Ranura 4 (Manual)", isAuto: false, data: null, savedAt: null }
+    ]
+  };
+  localStorage.setItem(key, JSON.stringify(newCard));
+  return newCard;
+}
+
+function saveMemoryCard(card) {
+  card.lastSync = new Date().toISOString();
+  localStorage.setItem(getMemoryCardKey(), JSON.stringify(card));
+}
+
+function saveToSlot(slotId, isSilent = false) {
+  const card = getMemoryCard();
+  const slot = card.slots.find(s => s.id === slotId);
+  if (!slot) return;
+
+  slot.savedAt = new Date().toISOString();
+  slot.data = JSON.parse(JSON.stringify(userState));
+
+  saveMemoryCard(card);
+  if (!isSilent) {
+    renderMemoryCardSlots();
+    alert(`¡Partida guardada con éxito en ${slot.name}!`);
+  }
+}
+
+function loadFromSlot(slotId) {
+  const card = getMemoryCard();
+  const slot = card.slots.find(s => s.id === slotId);
+  if (!slot || !slot.data) {
+    alert("Esta ranura está vacía.");
+    return;
+  }
+
+  if (!confirm(`¿Deseas cargar la partida de "${slot.name}" (Escena ${slot.data.chapter - 1}, ${formatPlaytime(slot.data.playtimeSeconds)})?`)) {
+    return;
+  }
+
+  userState = JSON.parse(JSON.stringify(slot.data));
+  const storeKey = `boveda_fragiles_save_${currentUser.id}`;
+  localStorage.setItem(storeKey, JSON.stringify(userState));
+
+  renderAllHistory();
+  checkUnlocks();
+  updateStatus();
+  closeMemoryCardModal();
+  alert(`Partida cargada exitosamente: ${slot.name}`);
+}
+
+function clearSlot(slotId) {
+  if (!confirm("¿Seguro que deseas vaciar esta ranura de guardado?")) return;
+  const card = getMemoryCard();
+  const slot = card.slots.find(s => s.id === slotId);
+  if (slot) {
+    slot.data = null;
+    slot.savedAt = null;
+    saveMemoryCard(card);
+    renderMemoryCardSlots();
+  }
+}
+
+function openMemoryCardModal() {
+  renderMemoryCardSlots();
+  document.getElementById('memCardModal').style.display = 'flex';
+}
+
+function closeMemoryCardModal() {
+  document.getElementById('memCardModal').style.display = 'none';
+}
+
+function renderMemoryCardSlots() {
+  const card = getMemoryCard();
+  const container = document.getElementById('memCardSlotsContainer');
+  container.innerHTML = '';
+
+  card.slots.forEach(slot => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'slot-card';
+
+    if (!slot.data) {
+      // Ranura vacía
+      cardEl.innerHTML = `
+        <div class="slot-top">
+          <span class="slot-tag ${slot.isAuto ? 'autosave' : ''}">${escapeHtml(slot.name)}</span>
+          <span style="font-size:11px; color:var(--text-muted);">[VACÍA]</span>
+        </div>
+        <div class="slot-body">
+          <img src="assets/images/yukiho_cover.jpg" class="slot-thumb" style="filter:grayscale(1) opacity(0.2);" alt="Vacío">
+          <div class="slot-info">
+            <strong style="color:var(--text-muted);">Sin datos de guardado</strong>
+            <span>Lista para registrar tu historia</span>
+          </div>
+        </div>
+        <div class="slot-actions">
+          <button class="slot-btn save" onclick="saveToSlot(${slot.id})">💾 Guardar Aquí</button>
+        </div>
+      `;
+    } else {
+      // Ranura con datos
+      const d = slot.data;
+      const flagsList = [];
+      if (d.flags?.hot_cinnamon_tea) flagsList.push('☕ Té de canela');
+      if (d.flags?.notebook_mentioned) flagsList.push('📖 Cuaderno secreto');
+      if (d.flags?.dry_clothes) flagsList.push('👕 Ropa seca');
+
+      cardEl.innerHTML = `
+        <div class="slot-top">
+          <span class="slot-tag ${slot.isAuto ? 'autosave' : ''}">${escapeHtml(slot.name)}</span>
+          <span style="font-size:11px; color:var(--accent-teal);">🛡️ ${d.bondPercent}% Vínculo</span>
+        </div>
+        <div class="slot-body">
+          <img src="assets/images/yukiho_cover.jpg" class="slot-thumb" alt="Yukiho">
+          <div class="slot-info">
+            <strong>Escena ${d.chapter - 1} · ${escapeHtml(d.milestone || 'Refugio')}</strong>
+            <span>⏱️ Tiempo: <strong>${formatPlaytime(d.playtimeSeconds)}</strong></span>
+            <span>📅 ${new Date(slot.savedAt).toLocaleString()}</span>
+            <div class="slot-flags">
+              ${flagsList.map(f => `<span class="flag-chip">${f}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="slot-actions">
+          <button class="slot-btn load" onclick="loadFromSlot(${slot.id})">📂 Cargar</button>
+          <button class="slot-btn save" onclick="saveToSlot(${slot.id})">💾 Sobrescribir</button>
+          ${!slot.isAuto ? `<button class="slot-btn" style="flex:0.4; color:var(--accent-rose);" onclick="clearSlot(${slot.id})">🗑️</button>` : ''}
+        </div>
+      `;
+    }
+
+    container.appendChild(cardEl);
+  });
+}
+
+function exportMemoryCardFile() {
+  const card = getMemoryCard();
+  const payload = {
+    app: "ARKAIOS - La Bóveda de los Frágiles",
+    type: "ARKAIOS_MEMORY_CARD",
+    version: "2.0",
+    exportedAt: new Date().toISOString(),
+    user: currentUser,
+    activeState: userState,
+    memoryCard: card
+  };
+
+  const str = JSON.stringify(payload, null, 2);
+  const blob = new Blob([str], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tarjeta_memoria_arkaios_${currentUser.name.replace(/\s+/g, '_')}_${Date.now()}.sav`;
+  a.click();
+}
+
+function importMemoryCardFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.memoryCard || !parsed.memoryCard.slots) {
+        throw new Error("Formato de Memory Card inválido.");
+      }
+
+      saveMemoryCard(parsed.memoryCard);
+      if (parsed.activeState) {
+        userState = parsed.activeState;
+        saveUserStory();
+        renderAllHistory();
+      }
+
+      renderMemoryCardSlots();
+      alert("¡Tarjeta de memoria importada con éxito! Todas tus ranuras han sido sincronizadas.");
+    } catch(err) {
+      alert("Error al importar la tarjeta de memoria: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function copyCloudSaveCode() {
+  const card = getMemoryCard();
+  const payload = {
+    c: card,
+    u: userState,
+    t: Date.now()
+  };
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  navigator.clipboard.writeText(b64);
+  alert("¡Código de sincronización copiado al portapapeles! Puedes pegarlo en cualquier otro dispositivo para restaurar todas tus ranuras.");
+}
+
+function loadFromSaveCodePrompt() {
+  const code = prompt("Pega aquí tu código de sincronización / respaldo:");
+  if (!code) return;
+
+  try {
+    const raw = decodeURIComponent(escape(atob(code.trim())));
+    const parsed = JSON.parse(raw);
+    if (!parsed.c || !parsed.c.slots) throw new Error("Código no válido");
+
+    saveMemoryCard(parsed.c);
+    if (parsed.u) {
+      userState = parsed.u;
+      saveUserStory();
+      renderAllHistory();
+    }
+    renderMemoryCardSlots();
+    alert("¡Ranuras y partida sincronizadas con éxito!");
+  } catch(e) {
+    alert("No se pudo restaurar el código. Verifica que esté completo.");
+  }
+}
+
+// ── RASTRO DE HISTORIA & LÍNEA DE TIEMPO ───────────────────────
+function openTimelineModal() {
+  renderTimelineView();
+  document.getElementById('timelineModal').style.display = 'flex';
+}
+
+function closeTimelineModal() {
+  document.getElementById('timelineModal').style.display = 'none';
+}
+
+function renderTimelineView() {
+  const overview = document.getElementById('coherenceOverview');
+  const list = document.getElementById('timelineList');
+
+  // Overview box
+  overview.innerHTML = `
+    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <div><strong>⏱️ Tiempo en el Refugio:</strong> ${formatPlaytime(userState.playtimeSeconds)}</div>
+      <div><strong>🌱 Hito Actual:</strong> <span style="color:var(--accent-teal); font-weight:700;">${escapeHtml(userState.milestone)}</span></div>
+      <div><strong>🛡️ Confianza Lograda:</strong> <span style="color:var(--accent-amber); font-weight:700;">${userState.bondPercent}%</span></div>
+    </div>
+    <div style="margin-top:8px; font-size:11px; color:#cbd5e1; border-top:1px solid rgba(255,255,255,0.08); padding-top:6px;">
+      <strong>Hechos Irrevocables Establecidos:</strong>
+      Yukiho rescatada de la tormenta en Cancún · Vestida con ropa limpia y seca de ${escapeHtml(getProtagonistName())} ·
+      ${userState.flags?.hot_cinnamon_tea ? "Té de canela servido y reconfortante · " : "Té de canela pendiente · "}
+      ${userState.flags?.notebook_mentioned ? "Cuaderno secreto abordado con respeto · " : "Cuaderno secreto aún reservado · "}
+      Santuario de sanación activo.
+    </div>
+  `;
+
+  // Timeline list
+  list.innerHTML = '';
+  if (!userState.history.length) {
+    list.innerHTML = '<div style="color:var(--text-muted); padding:10px;">Aún no hay decisiones registradas.</div>';
+    return;
+  }
+
+  userState.history.forEach((step, idx) => {
+    const node = document.createElement('div');
+    node.className = 'timeline-node';
+
+    node.innerHTML = `
+      <div class="timeline-header">
+        <span><strong>ESCENA ${step.chapter || (idx + 1)}</strong> · ${step.timestamp ? new Date(step.timestamp).toLocaleTimeString() : ''}</span>
+        <span>⏱️ +${formatPlaytime(step.playtimeOffset || 0)}</span>
+      </div>
+      ${step.playerChoice ? `<div class="timeline-saul">▶ ${escapeHtml(getProtagonistName())}: "${escapeHtml(step.playerChoice)}"</div>` : `<div class="timeline-saul">▶ ${escapeHtml(getProtagonistName())}: (Llegada inicial al departamento)</div>`}
+      ${step.dialogue ? `<div class="timeline-yukiho">🌸 Yukiho: "${escapeHtml(step.dialogue)}"</div>` : ''}
+      <div style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between;">
+        <span>${escapeHtml(step.narration?.slice(0, 85) || '')}...</span>
+        <span style="color:var(--accent-amber);">🛡️ ${step.bondAfter || userState.bondPercent}%</span>
+      </div>
+    `;
+    list.appendChild(node);
+  });
+}
+
+// ── EXPEDIENTE Y DESCARGA .LOG ────────────────────────────────
+function openUserModal() {
+  document.getElementById('modalUserDisplay').textContent = `${currentUser.name} (${currentUser.email})`;
+  document.getElementById('modalTurnCount').textContent = `${userState.history.length} escenas completadas`;
+  document.getElementById('modalBondDisplay').textContent = `${userState.bondPercent}% de confianza`;
+  document.getElementById('userModal').style.display = 'flex';
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').style.display = 'none';
+}
+
+function downloadPlayerLog() {
+  const logData = {
+    project: "ARKAIOS - La Bóveda de los Frágiles",
+    user: currentUser,
+    summary: {
+      totalScenes: userState.history.length,
+      finalBond: userState.bondPercent + "%",
+      totalPlaytime: formatPlaytime(userState.playtimeSeconds),
+      currentMilestone: userState.milestone,
+      activeFlags: userState.flags,
+      exportedAt: new Date().toISOString()
+    },
+    chronicle: userState.history
+  };
+
+  const str = JSON.stringify(logData, null, 2);
+  const blob = new Blob([str], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bitacora_yukiho_${currentUser.name.replace(/\s+/g, '_')}_${Date.now()}.log`;
+  a.click();
+}
+
+function copyPlayerReport() {
+  const lines = [
+    `=== BITÁCORA ARKAIOS: LA BÓVEDA DE LOS FRÁGILES ===`,
+    `Usuario: ${currentUser.name} (${currentUser.email})`,
+    `Escenas jugadas: ${userState.history.length}`,
+    `Tiempo acumulado: ${formatPlaytime(userState.playtimeSeconds)}`,
+    `Hito de coherencia: ${userState.milestone}`,
+    `Confianza alcanzada: ${userState.bondPercent}%`,
+    `Última escena: ${userState.history[userState.history.length - 1]?.narration || ''}`,
+    `Últimas palabras de Yukiho: ${userState.history[userState.history.length - 1]?.dialogue || ''}`
+  ];
+  navigator.clipboard.writeText(lines.join('\n'));
+  alert("Resumen de tu bitácora copiado al portapapeles.");
+}
+
+function resetCurrentUserStory() {
+  if (!confirm(`¿Deseas reiniciar tu progreso personal (${currentUser.name})?`)) return;
+  const storeKey = `boveda_fragiles_save_${currentUser.id}`;
+  localStorage.removeItem(storeKey);
+  resetToFreshGame();
+  closeUserModal();
+}
+
+// ── AUDIO ─────────────────────────────────────────────────────
+function toggleRainAudio() {
+  const audio = document.getElementById('ambientAudio');
+  const txt = document.getElementById('audioTxt');
+  const icon = document.getElementById('audioIcon');
+  if (audio.paused) {
+    audio.play().then(() => {
+      txt.textContent = 'Pausar';
+      icon.textContent = '🔊';
+    }).catch(e => console.warn("Audio blocked", e));
+  } else {
+    audio.pause();
+    txt.textContent = 'Lluvia';
+    icon.textContent = '🌧️';
+  }
+}
+
+function escapeHtml(t) {
+  if (!t) return '';
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+</script>
+
+<!-- MODAL: CAMPAÑA DE REGALO AMR Y REFERIDOS -->
+<div class="modal-overlay" id="referralModal">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-family:'Playfair Display', serif; color:#fbbf24; font-size:22px; margin:0;">
+        🎁 Campaña AMR de Regalo & Amigos
+      </h3>
+      <button class="modal-close-btn" onclick="closeReferralModal()">✕</button>
+    </div>
+    
+    <div style="font-size:13px; color:var(--text-muted); line-height:1.6;">
+      Para celebrar la llegada de nuevos lectores, puedes canjear tu código de bienvenida o compartir tu enlace personal para que tú y tus amigos reciban <strong>AMR de cortesía</strong> para la tómbola y álbumes de fotos.
+    </div>
+
+    <!-- CANJEAR CÓDIGO -->
+    <div style="background:#090c14; border:1px solid rgba(245,158,11,0.25); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+      <span style="font-size:12px; font-weight:700; color:#fbbf24;">🎟️ Canjear Código de Bienvenida</span>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="promoCodeInput" value="YUKIHO2026" placeholder="Ingresa tu código..." style="flex:1; background:#121827; border:1px solid var(--border-color); color:#fff; border-radius:8px; padding:8px 12px; font-family:monospace; font-size:14px;">
+        <button class="nav-btn" style="background:#fbbf24; color:#000; font-weight:700;" onclick="submitPromoCode()">Canjear</button>
+      </div>
+      <span id="promoCodeMsg" style="font-size:11px; color:var(--accent-teal);">Código oficial activo: YUKIHO2026 (+50 AMR de bienvenida)</span>
+    </div>
+
+    <!-- ENLACE DE INVITACIÓN -->
+    <div style="background:#090c14; border:1px solid rgba(168,85,247,0.25); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+      <span style="font-size:12px; font-weight:700; color:#c084fc;">🔗 Tu Enlace de Invitación</span>
+      <div style="font-size:12px; color:var(--text-muted);">
+        Comparte este enlace. Cuando un amigo entre a jugar, ambos podrán disfrutar del ecosistema y reclamar recompensas de AMR:
+      </div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="referralLinkInput" readonly value="https://yukiho-sanctuary.vercel.app/?code=YUKIHO2026" style="flex:1; background:#121827; border:1px solid var(--border-color); color:#94a3b8; border-radius:8px; padding:8px 12px; font-size:12px;">
+        <button class="nav-btn" style="border-color:#c084fc; color:#c084fc;" onclick="copyReferralLink()">Copiar 📋</button>
+      </div>
+    </div>
+
+    <div style="font-size:11px; color:#64748b; line-height:1.4;">
+      ℹ️ El saldo de AMR en esta novela visual es independiente y autosuficiente. Todo el juego y los diálogos con Yukiho son 100% gratuitos y libres de costo.
+    </div>
+  </div>
+</div>
+
+
+<script>
+// SWITCHER MULTIMODAL (VIDEO VS MAPA VS RETRATO)
+function switchVisualView(view) {
+  const cCard = document.getElementById('cinematicCard');
+  const aptMap = document.getElementById('aptMap');
+  const vCard = document.querySelector('.visual-card');
+
+  document.getElementById('tabVideo').classList.remove('active');
+  document.getElementById('tabMap').classList.remove('active');
+  document.getElementById('tabArt').classList.remove('active');
+
+  if (view === 'video') {
+    document.getElementById('tabVideo').classList.add('active');
+    if (cCard) cCard.style.display = 'flex';
+    if (aptMap) aptMap.style.display = 'none';
+    if (vCard) vCard.hidden = true;
+  } else if (view === 'map') {
+    document.getElementById('tabMap').classList.add('active');
+    if (cCard) cCard.style.display = 'none';
+    if (aptMap) aptMap.style.display = 'block';
+    if (vCard) vCard.hidden = true;
+  } else if (view === 'art') {
+    document.getElementById('tabArt').classList.add('active');
+    if (cCard) cCard.style.display = 'none';
+    if (aptMap) aptMap.style.display = 'none';
+    if (vCard) vCard.hidden = false;
+  }
+}
+
+// REPRODUCTOR DE VIDEO Y BÓVEDA
+function togglePlayPause() {
+  const vid = document.getElementById('gameVideoPlayer');
+  const btn = document.getElementById('btnPlayPause');
+  if (!vid) return;
+  if (vid.paused) {
+    vid.play();
+    btn.textContent = '⏸ Pausa';
+  } else {
+    vid.pause();
+    btn.textContent = '▶ Reproducir';
+  }
+}
+
+function toggleMuteVideo() {
+  const vid = document.getElementById('gameVideoPlayer');
+  const btn = document.getElementById('btnMuteVideo');
+  if (!vid) return;
+  vid.muted = !vid.muted;
+  btn.textContent = vid.muted ? '🔇 Silenciado' : '🔊 Sonido';
+}
+
+function playVaultVideo(src, title, chip) {
+  const vid = document.getElementById('gameVideoPlayer');
+  const titlePill = document.getElementById('currentVideoTitle');
+  if (!vid) return;
+  vid.src = src;
+  vid.play().catch(() => {});
+  if (titlePill) titlePill.textContent = title;
+  document.getElementById('btnPlayPause').textContent = '⏸ Pausa';
+
+  document.querySelectorAll('.v-chip').forEach(c => c.classList.remove('active'));
+  if (chip) chip.classList.add('active');
+
+  // Switch to video view if not currently active
+  switchVisualView('video');
+}
+
+// REFERRAL & PROMO MODAL
+function openReferralModal() {
+  const m = document.getElementById('referralModal');
+  if (m) m.classList.add('show');
+}
+function closeReferralModal() {
+  const m = document.getElementById('referralModal');
+  if (m) m.classList.remove('show');
+}
+
+async function submitPromoCode() {
+  const input = document.getElementById('promoCodeInput');
+  const msg = document.getElementById('promoCodeMsg');
+  const code = (input ? input.value : '').trim();
+  if (!code) return;
+
+  if (window.AmrWallet && typeof window.AmrWallet.redeem === 'function') {
+    try {
+      const res = await window.AmrWallet.redeem(code);
+      if (msg) {
+        msg.style.color = '#34d399';
+        msg.textContent = '🎉 ¡Código canjeado con éxito! Recibiste saldo AMR.';
+      }
+    } catch (e) {
+      if (msg) {
+        msg.style.color = '#f87171';
+        msg.textContent = e.message || 'Código ya canjeado o no válido.';
+      }
+    }
+  } else {
+    if (msg) {
+      msg.style.color = '#34d399';
+      msg.textContent = '🎉 ¡Bienvenido! Código ' + code + ' registrado para tu cuenta.';
+    }
+  }
+}
+
+function copyReferralLink() {
+  const input = document.getElementById('referralLinkInput');
+  if (input) {
+    navigator.clipboard.writeText(input.value).then(() => {
+      alert('¡Enlace de invitación copiado al portapapeles!');
+    });
+  }
+}
+
+// Auto-check promo code in query params (?code=XYZ or ?ref=XYZ)
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code') || params.get('ref');
+  if (code) {
+    const pInput = document.getElementById('promoCodeInput');
+    if (pInput) pInput.value = code;
+    openReferralModal();
+  }
+});
+</script>
+
+</body>
+</html>
