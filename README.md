@@ -1,0 +1,3 @@
+Usa este codigo y obten tus primeros 50 AMR para probar los item's dentro del juego...
+Se un coleccionista ahora!!!:
+🎁 Enlace de Invitación Directo con +50 AMR: https://yukiho-sanctuary.vercel.app/?code=YUKIHO2026
